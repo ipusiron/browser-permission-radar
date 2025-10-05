@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Browser Permission Radar - ブラウザー権限可視化ツール</title>
+  <link rel="stylesheet" href="style.css" />
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Browser Permission Radar</h1>
+    <p class="subtitle">ブラウザーの主要権限（位置情報・カメラ・マイク・通知・クリップボードなど）をレーダーチャート＋スコア表示でわかりやすく可視化します</p>
+  </header>
+
+  <main class="container">
+    <nav class="tabs">
+      <button data-tab="radar" class="tab active">レーダー</button>
+      <button data-tab="details" class="tab">詳細</button>
+      <button data-tab="learn" class="tab">座学</button>
+    </nav>
+
+    <!-- Global Legend -->
+    <div class="global-legend">
+      <div class="legend">
+        <span class="legend-dot granted"></span>granted
+        <span class="legend-dot prompt"></span>prompt
+        <span class="legend-dot denied"></span>denied
+        <span class="legend-dot unsupported"></span>unsupported
+        <span class="help-icon" data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定&#10;denied=拒否済み&#10;unsupported=ブラウザ未対応">?</span>
+      </div>
+    </div>
+
+    <!-- Radar (カテゴリ分割 & スコアリンク) -->
+    <section id="radar" class="panel visible">
+      <div class="grid-3">
+        <div class="card">
+          <h3 class="group-title">
+            デバイスアクセス系
+            <span class="help-icon" data-tooltip="カメラ、マイク、位置情報、MIDI機器など&#10;物理デバイスへのアクセス権限を示します。&#10;&#10;リスク: 盗撮・盗聴・位置特定">?</span>
+            <button id="scoreLink-device" class="score-link" title="Detailsでこのカテゴリに絞り込み">Score: <span id="score-device">-</span></button>
+          </h3>
+          <p class="muted small">camera / microphone / geolocation / midi</p>
+          <canvas id="radarDevice" width="360" height="360" aria-label="Device Permissions Radar"></canvas>
+          <div role="status" aria-live="polite" id="radar-status-device" class="sr-only"></div>
+          <p class="muted tiny">※ 点をクリックすると「詳細」タブの該当権限へジャンプします。</p>
+        </div>
+
+        <div class="card">
+          <h3 class="group-title">
+            データアクセス系
+            <span class="help-icon" data-tooltip="クリップボード、永続ストレージ、&#10;バックグラウンド同期など、&#10;ユーザーデータの読み書きに関する権限です。&#10;&#10;リスク: パスワード窃取・トラッキング">?</span>
+            <button id="scoreLink-data" class="score-link" title="Detailsでこのカテゴリに絞り込み">Score: <span id="score-data">-</span></button>
+          </h3>
+          <p class="muted small">clipboard-read / clipboard-write / persistent-storage / background-sync</p>
+          <canvas id="radarData" width="360" height="360" aria-label="Data Permissions Radar"></canvas>
+          <div role="status" aria-live="polite" id="radar-status-data" class="sr-only"></div>
+          <p class="muted tiny">※ 点をクリックすると「詳細」タブの該当権限へジャンプします。</p>
+        </div>
+
+        <div class="card">
+          <h3 class="group-title">
+            通知・通信系
+            <span class="help-icon" data-tooltip="プッシュ通知、決済処理、アイドル検知など、&#10;ユーザーへの通信・通知機能に関する権限です。&#10;&#10;リスク: スパム・フィッシング誘導・&#10;不正決済・行動監視">?</span>
+            <button id="scoreLink-comm" class="score-link" title="Detailsでこのカテゴリに絞り込み">Score: <span id="score-comm">-</span></button>
+          </h3>
+          <p class="muted small">notifications / push / payment-handler / idle-detection</p>
+          <canvas id="radarComm" width="360" height="360" aria-label="Communication Permissions Radar"></canvas>
+          <div role="status" aria-live="polite" id="radar-status-comm" class="sr-only"></div>
+          <p class="muted tiny">※ 点をクリックすると「詳細」タブの該当権限へジャンプします。</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row space-between">
+          <h3>クイックテスト（安全な最小動作）
+            <span class="help-icon" data-tooltip="各権限を安全にテストできます。&#10;&#10;・カメラ・マイクは即座に停止&#10;・データ送信は一切なし&#10;・権限リクエストの動作を体験可能">?</span>
+          </h3>
+          <button id="rescanBtn" class="rescan-btn">🔄 Rescan All</button>
+        </div>
+        <div class="test-grid">
+          <div class="test-item">
+            <button id="askNotif" class="test-btn">🔔 Notifications</button>
+            <span class="test-desc">通知の許可をリクエスト</span>
+          </div>
+          <div class="test-item">
+            <button id="getGeo" class="test-btn">📍 Geolocation</button>
+            <span class="test-desc">位置情報を1回取得</span>
+          </div>
+          <div class="test-item">
+            <button id="getCamera" class="test-btn">📷 Camera</button>
+            <span class="test-desc">カメラのみ起動（即停止）</span>
+          </div>
+          <div class="test-item">
+            <button id="getMic" class="test-btn">🎤 Microphone</button>
+            <span class="test-desc">マイクのみ起動（即停止）</span>
+          </div>
+          <div class="test-item">
+            <button id="readClip" class="test-btn">📋 Clipboard Read</button>
+            <span class="test-desc">クリップボードを読み取り</span>
+          </div>
+          <div class="test-item">
+            <button id="writeClip" class="test-btn">✏️ Clipboard Write</button>
+            <span class="test-desc">'test' をクリップボードに書き込み</span>
+          </div>
+          <div class="test-item">
+            <button id="getMIDI" class="test-btn">🎹 MIDI</button>
+            <span class="test-desc">MIDI機器へのアクセスをリクエスト</span>
+          </div>
+          <div class="test-item">
+            <button id="askPersist" class="test-btn">💾 Persistent Storage</button>
+            <span class="test-desc">永続ストレージをリクエスト</span>
+          </div>
+          <div class="test-item">
+            <button id="testBgSync" class="test-btn">🔄 Background Sync</button>
+            <span class="test-desc">バックグラウンド同期を登録</span>
+          </div>
+        </div>
+        <div id="log" class="log" role="log" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- Details（フィルタ＆リンク先） -->
+    <section id="details" class="panel">
+      <div class="card">
+        <div class="row space-between">
+          <h3>Permission Status List
+            <span class="help-icon" data-tooltip="全権限の詳細一覧です。&#10;&#10;・カテゴリフィルターで絞り込み可能&#10;・権限名クリックでハイライト表示&#10;・?アイコンで詳細なリスク解説を表示">?</span>
+          </h3>
+          <div class="filter-row">
+            <span class="muted small">カテゴリフィルター:</span>
+            <button class="chip" data-filter="all">All</button>
+            <button class="chip" data-filter="device">Device</button>
+            <button class="chip" data-filter="data">Data</button>
+            <button class="chip" data-filter="comm">Comm</button>
+          </div>
+        </div>
+        <p class="muted">ブラウザの実装状況により、未対応は <code>unsupported</code> になります。権限名をクリックすると軽くハイライトします。</p>
+        <div id="permTableWrap" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- Learn -->
+    <section id="learn" class="panel">
+      <div class="card">
+        <h2>座学：ブラウザ権限の基礎</h2>
+        <ul>
+          <li><strong>Permissions API</strong> は統一仕様だが、ブラウザごとに対応状況が異なる。</li>
+          <li>ユーザーが一度許可した権限は、その<strong>オリジン</strong>に紐づく。</li>
+          <li>一部の権限は<strong>ユーザー操作（クリック）</strong>無しではリクエストできない（クリップボード等）。</li>
+          <li>権限は最小限にとどめ、不要になれば<strong>速やかに停止・破棄</strong>する（例：getUserMediaの停止）。</li>
+        </ul>
+
+        <h3>権限の永続性について</h3>
+        <ul>
+          <li><strong>永続的な権限</strong>：通知（Notifications）・位置情報（Geolocation）・クリップボード書き込み等は、一度許可すると<code>granted</code>状態が保持される。<strong>レーダーチャートの変化を確認するには、通知権限のテストを推奨</strong>。</li>
+          <li><strong>一時的な権限</strong>：カメラ・マイクは<code>getUserMedia()</code>で許可されるが、<strong>ストリーム停止後は<code>prompt</code>に戻る</strong>。これはブラウザの仕様であり、プライバシー保護のための設計。</li>
+          <li><strong>状態の確認</strong>：Quick Testsで権限を許可した後、<code>Rescan All</code>ボタンでレーダーチャートを更新し、状態変化を観察できる。</li>
+        </ul>
+
+        <p class="muted">※ このツールは教育目的であり、データはローカルのみ。サーバ送信は行いません。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer">
+      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank">ipusiron/browser-permission-radar</a> ）
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
