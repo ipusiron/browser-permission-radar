@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Browser Permission Radar - ブラウザー権限可視化ツール</title>
+
+  <!-- Security Headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'self'; form-action 'none';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="no-referrer">
+
   <link rel="stylesheet" href="style.css" />
   <meta name="color-scheme" content="light dark">
 </head>
@@ -143,29 +149,133 @@
     <!-- Learn -->
     <section id="learn" class="panel">
       <div class="card">
-        <h2>座学：ブラウザ権限の基礎</h2>
-        <ul>
-          <li><strong>Permissions API</strong> は統一仕様だが、ブラウザごとに対応状況が異なる。</li>
-          <li>ユーザーが一度許可した権限は、その<strong>オリジン</strong>に紐づく。</li>
-          <li>一部の権限は<strong>ユーザー操作（クリック）</strong>無しではリクエストできない（クリップボード等）。</li>
-          <li>権限は最小限にとどめ、不要になれば<strong>速やかに停止・破棄</strong>する（例：getUserMediaの停止）。</li>
-        </ul>
+        <h2>📚 座学：ブラウザ権限の基礎知識</h2>
+        <p class="muted" style="margin-bottom:20px;">各セクションをクリックして展開できます</p>
 
-        <h3>権限の永続性について</h3>
-        <ul>
-          <li><strong>永続的な権限</strong>：通知（Notifications）・位置情報（Geolocation）・クリップボード書き込み等は、一度許可すると<code>granted</code>状態が保持される。<strong>レーダーチャートの変化を確認するには、通知権限のテストを推奨</strong>。</li>
-          <li><strong>一時的な権限</strong>：カメラ・マイクは<code>getUserMedia()</code>で許可されるが、<strong>ストリーム停止後は<code>prompt</code>に戻る</strong>。これはブラウザの仕様であり、プライバシー保護のための設計。</li>
-          <li><strong>状態の確認</strong>：Quick Testsで権限を許可した後、<code>Rescan All</code>ボタンでレーダーチャートを更新し、状態変化を観察できる。</li>
-        </ul>
+        <!-- Accordion 1 -->
+        <div class="accordion-section">
+          <button class="accordion-header" data-accordion="permissions-api">
+            🔑 Permissions API とは
+          </button>
+          <div class="accordion-content" data-accordion-content="permissions-api">
+            <p><strong>Permissions API</strong> は、Webアプリケーションがブラウザの機能（位置情報、カメラ、通知など）にアクセスする際の許可状態を統一的に管理するための仕様です。</p>
+            <ul>
+              <li><strong>統一仕様</strong>：W3Cによって標準化されているが、ブラウザごとに対応状況が異なる</li>
+              <li><strong>オリジン単位の管理</strong>：許可した権限は <code>https://example.com</code> のようなオリジン（プロトコル + ドメイン + ポート）ごとに記録される</li>
+              <li><strong>4つの状態</strong>：
+                <ul>
+                  <li><code>granted</code> - 許可済み（アクセス可能）</li>
+                  <li><code>prompt</code> - 未決定（次回アクセス時にプロンプト表示）</li>
+                  <li><code>denied</code> - 拒否済み（アクセス不可）</li>
+                  <li><code>unsupported</code> - ブラウザ未対応（このツール独自の表示）</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
 
-        <p class="muted">※ このツールは教育目的であり、データはローカルのみ。サーバ送信は行いません。</p>
+        <!-- Accordion 2 -->
+        <div class="accordion-section">
+          <button class="accordion-header" data-accordion="permission-risks">
+            🔐 権限の種類とリスク
+          </button>
+          <div class="accordion-content" data-accordion-content="permission-risks">
+            <h4>🟢 デバイスアクセス系</h4>
+            <ul>
+              <li><strong>camera / microphone</strong>：盗撮・盗聴リスク。悪意あるサイトが無断で録画・録音する可能性</li>
+              <li><strong>geolocation</strong>：位置情報追跡リスク。行動パターンの分析やストーキングに悪用される可能性</li>
+              <li><strong>midi</strong>：デバイス指紋生成リスク。接続されているMIDI機器情報からユーザーを識別する可能性</li>
+            </ul>
+
+            <h4>🔵 データアクセス系</h4>
+            <ul>
+              <li><strong>clipboard-read</strong>：パスワード窃取リスク。コピーした機密情報を無断で読み取られる可能性</li>
+              <li><strong>clipboard-write</strong>：悪意あるコード注入リスク。クリップボードを書き換えて別のコマンドを実行させる可能性</li>
+              <li><strong>persistent-storage</strong>：長期的トラッキングリスク。削除されにくいデータでユーザーを追跡する可能性</li>
+              <li><strong>background-sync</strong>：意図しない通信リスク。バックグラウンドでデータを送信し続ける可能性</li>
+            </ul>
+
+            <h4>🟣 通信・通知系</h4>
+            <ul>
+              <li><strong>notifications</strong>：フィッシング誘導リスク。偽の警告通知で悪意あるサイトへ誘導する可能性</li>
+              <li><strong>push</strong>：バックグラウンド通信リスク。サーバーからのプッシュメッセージで行動を監視される可能性</li>
+              <li><strong>payment-handler</strong>：不正決済リスク。偽の決済画面で金銭的被害を受ける可能性</li>
+              <li><strong>idle-detection</strong>：行動監視リスク。ユーザーの活動パターンを分析される可能性</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Accordion 3 -->
+        <div class="accordion-section">
+          <button class="accordion-header" data-accordion="persistence">
+            ⏱️ 権限の永続性について
+          </button>
+          <div class="accordion-content" data-accordion-content="persistence">
+            <ul>
+              <li><strong>永続的な権限</strong>：通知・位置情報・クリップボード書き込み等は、一度許可すると<code>granted</code>状態が保持される
+                <br><span class="muted">💡 レーダーチャートの変化を確認するには、通知権限のテストを推奨</span>
+              </li>
+              <li><strong>一時的な権限</strong>：カメラ・マイクは<code>getUserMedia()</code>で許可されるが、ストリーム停止後は<code>prompt</code>に戻る
+                <br><span class="muted">💡 これはプライバシー保護のためのブラウザの仕様</span>
+              </li>
+              <li><strong>状態の確認</strong>：Quick Testsで権限を許可した後、<code>Rescan All</code>ボタンでレーダーチャートを更新し、状態変化を観察できる</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Accordion 4 -->
+        <div class="accordion-section">
+          <button class="accordion-header" data-accordion="best-practices">
+            🛡️ セキュリティのベストプラクティス
+          </button>
+          <div class="accordion-content" data-accordion-content="best-practices">
+            <ul>
+              <li><strong>最小権限の原則</strong>：必要最低限の権限のみを許可する</li>
+              <li><strong>定期的な見直し</strong>：ブラウザ設定から不要な権限を定期的に削除する</li>
+              <li><strong>オリジンの確認</strong>：権限を許可する前に、URLバーでオリジンが正しいか確認する（フィッシングサイト対策）</li>
+              <li><strong>即座に停止</strong>：カメラ・マイクなどのデバイスアクセスは、使用後すぐに停止する（このツールも実践）</li>
+              <li><strong>プライベートブラウジング活用</strong>：一時的に権限が必要な場合は、プライベートウィンドウを使用する</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Accordion 5 -->
+        <div class="accordion-section">
+          <button class="accordion-header" data-accordion="how-to-learn">
+            🧪 このツールの学習方法
+          </button>
+          <div class="accordion-content" data-accordion-content="how-to-learn">
+            <ol>
+              <li><strong>現在の状態を確認</strong>：まず「レーダー」タブで自分のブラウザの権限状態を確認</li>
+              <li><strong>権限を体験</strong>：「Quick Tests」で安全に権限リクエストを体験（カメラ・マイクは即停止、位置情報・クリップボードは非表示）</li>
+              <li><strong>変化を観察</strong>：<code>Rescan All</code>でレーダーチャートの変化を確認</li>
+              <li><strong>詳細を理解</strong>：「詳細」タブで各権限の状態を確認し、「?」アイコンでリスクを学習</li>
+              <li><strong>リセット</strong>：ブラウザ設定から権限をリセットし、最小権限の状態に戻す</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Accordion 6 - Resource Links -->
+        <div class="accordion-section">
+          <button class="accordion-header" data-accordion="resources">
+            🔗 関連リソース
+          </button>
+          <div class="accordion-content" data-accordion-content="resources">
+            <ul>
+              <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API" target="_blank" rel="noopener noreferrer">MDN: Permissions API （英語）</a></li>
+              <li><a href="PERMISSIONS_API.md">技術仕様書（このリポジトリ）</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="muted" style="margin-top:24px;">※ このツールは教育目的であり、データはすべてローカルで処理されます。サーバーへの送信は一切行いません。</p>
       </div>
     </section>
   </main>
 
   <footer>
     <div class="footer">
-      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank">ipusiron/browser-permission-radar</a> ）
+      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank" rel="noopener noreferrer">ipusiron/browser-permission-radar</a> ）
     </div>
   </footer>
 

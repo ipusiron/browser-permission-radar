@@ -1,21 +1,45 @@
+/**
+ * Browser Permission Radar - Stylesheet
+ *
+ * サイバーパンク風のダークテーマ
+ * カテゴリ別レーダーチャート可視化用スタイル
+ */
+
+/* ========================================
+   CSS Variables (Color Scheme)
+   ======================================== */
 :root{
+  /* 背景色 */
   --bg: #0d1117;
   --card: #1a1f2e;
+
+  /* アクセントカラー（ネオンブルー） */
   --accent: #00f0ff;
   --accent-glow: rgba(0, 240, 255, 0.5);
   --secondary: #ff00ff;
+
+  /* テキストカラー */
   --text: #f0f6fc;
   --muted: #a8b5d1;
+
+  /* ボーダー */
   --border: #2d3748;
-  --granted: #00ff88;
-  --prompt: #ffd700;
-  --denied: #ff3366;
-  --unsupported: #6b7280;
+
+  /* 権限ステータスカラー */
+  --granted: #00ff88;      /* 許可済み（緑） */
+  --prompt: #ffd700;       /* 未決定（黄） */
+  --denied: #ff3366;       /* 拒否済み（赤） */
+  --unsupported: #6b7280;  /* 未対応（グレー） */
+
+  /* ハイライト */
   --highlight: rgba(0, 240, 255, 0.2);
+
+  /* ネオンカラー */
   --neon-cyan: #00f0ff;
   --neon-magenta: #ff00ff;
   --neon-green: #00ff88;
 }
+/* ダークモード調整 */
 @media (prefers-color-scheme: dark) {
   :root{
     --bg: #0f1520;
@@ -27,6 +51,10 @@
     --highlight: #2a2a19;
   }
 }
+
+/* ========================================
+   Base Styles
+   ======================================== */
 *{box-sizing:border-box; word-wrap:break-word}
 html,body{margin:0;padding:0;overflow-x:hidden;width:100%}
 body{
@@ -127,7 +155,7 @@ body{
   border-left:3px solid var(--accent);
   position:relative;
   max-width:100%;
-  overflow:hidden;
+  overflow:visible;
 }
 canvas{
   display:block;
@@ -235,6 +263,7 @@ button:disabled{opacity:.4; cursor:not-allowed}
 }
 .group-title .help-icon{
   justify-self:start;
+  margin-left:0;
 }
 .group-title .score-link{
   margin-left:0;
@@ -382,136 +411,189 @@ td code{
 }
 
 /* Help Icon Tooltip */
-.help-icon{
+.help-icon,
+.help-icon-small{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:18px;
-  height:18px;
   border-radius:50%;
   background:rgba(0,240,255,0.2);
   border:1px solid var(--accent);
   color:var(--neon-cyan);
-  font-size:11px;
   font-weight:700;
   cursor:help;
-  position:relative;
   margin-left:6px;
-  transition:all 0.3s;
+  transition:all 0.25s ease;
   z-index:1;
 }
-.help-icon:hover{
-  z-index:10000;
+.help-icon{
+  width:18px;
+  height:18px;
+  font-size:11px;
 }
-.help-icon:hover{
-  background:rgba(0,240,255,0.4);
-  box-shadow:0 0 15px var(--accent-glow);
-  transform:scale(1.1);
-}
-.help-icon::after{
-  content:attr(data-tooltip);
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%) scale(0);
-  background:var(--card);
-  color:var(--text);
-  padding:14px 18px;
-  border-radius:4px;
-  border:2px solid var(--accent);
-  box-shadow:0 0 30px var(--accent-glow), inset 0 0 10px rgba(0,240,255,0.1);
-  font-size:12px;
-  font-weight:400;
-  white-space:pre-line;
-  width:320px;
-  max-width:calc(100vw - 40px);
-  max-height:calc(100vh - 60px);
-  overflow-y:auto;
-  line-height:1.7;
-  text-align:left;
-  text-transform:none;
-  letter-spacing:0.5px;
-  z-index:10002;
-  opacity:0;
-  transition:all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  pointer-events:none;
-  font-family:sans-serif;
-}
-.help-icon::before{
-  display:none;
-}
-.help-icon:hover::after{
-  transform:translate(-50%, -50%) scale(1);
-  opacity:1;
-}
-
-/* Small help icon for table */
 .help-icon-small{
   width:16px;
   height:16px;
   font-size:10px;
   margin-left:8px;
   vertical-align:middle;
-  position:relative;
 }
-.help-icon-small:hover{
-  z-index:10000;
+.help-icon:hover,
+.help-icon:focus-visible,
+.help-icon-small:hover,
+.help-icon-small:focus-visible{
+  background:rgba(0,240,255,0.4);
+  box-shadow:0 0 15px var(--accent-glow);
+  transform:scale(1.1);
+  outline:none;
+  z-index:1000;
 }
-.help-icon-small::after{
-  content:attr(data-tooltip);
+
+.tooltip-bubble{
   position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%, -50%) scale(0);
-  width:320px;
-  max-width:calc(100vw - 40px);
-  max-height:calc(100vh - 60px);
-  overflow-y:auto;
-  font-size:12px;
-  padding:14px 16px;
-  z-index:10002;
+  padding:14px 18px;
   background:var(--card);
   color:var(--text);
   border-radius:4px;
   border:2px solid var(--accent);
-  box-shadow:0 0 20px var(--accent-glow), inset 0 0 10px rgba(0,240,255,0.1);
+  box-shadow:0 0 24px var(--accent-glow), inset 0 0 10px rgba(0,240,255,0.1);
+  font-size:12px;
   font-weight:400;
   white-space:pre-line;
-  line-height:1.6;
+  width:max-content;
+  max-width:min(624px, calc(100vw - 32px));
+  max-height:calc(100vh - 60px);
+  overflow-y:auto;
+  line-height:1.7;
   text-align:left;
   text-transform:none;
   letter-spacing:0.5px;
-  opacity:0;
-  transition:all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  pointer-events:none;
   font-family:sans-serif;
-}
-.help-icon-small:hover::after{
-  transform:translate(-50%, -50%) scale(1);
-  opacity:1;
-}
-.help-icon-small::before{
-  display:none;
+  opacity:0;
+  transform:translateY(-4px);
+  transition:opacity 0.15s ease, transform 0.2s ease;
+  z-index:10000;
+  pointer-events:none;
 }
 
-/* Tooltip scrollbar styling */
-.help-icon::after::-webkit-scrollbar,
-.help-icon-small::after::-webkit-scrollbar{
+.tooltip-bubble.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.tooltip-bubble::-webkit-scrollbar{
   width:8px;
 }
-.help-icon::after::-webkit-scrollbar-track,
-.help-icon-small::after::-webkit-scrollbar-track{
+.tooltip-bubble::-webkit-scrollbar-track{
   background:rgba(0,0,0,0.3);
   border-radius:4px;
 }
-.help-icon::after::-webkit-scrollbar-thumb,
-.help-icon-small::after::-webkit-scrollbar-thumb{
+.tooltip-bubble::-webkit-scrollbar-thumb{
   background:var(--accent);
   border-radius:4px;
   box-shadow:0 0 6px var(--accent-glow);
 }
-.help-icon::after::-webkit-scrollbar-thumb:hover,
-.help-icon-small::after::-webkit-scrollbar-thumb:hover{
+.tooltip-bubble::-webkit-scrollbar-thumb:hover{
   background:var(--neon-cyan);
   box-shadow:0 0 10px var(--accent-glow);
 }
+
+/* ========================================
+   Accordion Styles (Learn Tab)
+   ======================================== */
+.accordion-section{
+  margin-bottom:16px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
+  background:rgba(0,0,0,0.2);
+}
+
+.accordion-header{
+  background:linear-gradient(135deg, rgba(0,240,255,0.08), rgba(255,0,255,0.08));
+  border:none;
+  width:100%;
+  padding:16px 20px;
+  text-align:left;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:16px;
+  font-weight:700;
+  color:var(--accent);
+  transition:all 0.3s ease;
+  position:relative;
+}
+
+.accordion-header:hover{
+  background:linear-gradient(135deg, rgba(0,240,255,0.15), rgba(255,0,255,0.15));
+  box-shadow:0 0 15px rgba(0,240,255,0.2);
+}
+
+.accordion-header::after{
+  content:'▼';
+  font-size:12px;
+  transition:transform 0.3s ease;
+  color:var(--accent);
+}
+
+.accordion-header.active::after{
+  transform:rotate(180deg);
+}
+
+.accordion-content{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding:0 20px;
+}
+
+.accordion-content.active{
+  max-height:2000px;
+  padding:20px;
+  transition:max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-content ul,
+.accordion-content ol{
+  margin:12px 0;
+  padding-left:24px;
+}
+
+.accordion-content li{
+  margin-bottom:10px;
+  line-height:1.7;
+}
+
+.accordion-content h4{
+  margin:16px 0 8px 0;
+  color:var(--accent);
+  font-size:14px;
+}
+
+/* ========================================
+   Enhanced Link Styles (Learn Tab)
+   ======================================== */
+#learn a{
+  color:var(--accent);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+  transition:all 0.2s ease;
+  font-weight:600;
+  padding:2px 4px;
+  border-radius:2px;
+}
+
+#learn a:hover{
+  color:var(--neon-cyan);
+  background:rgba(0,240,255,0.1);
+  border-bottom:1px solid var(--accent);
+  box-shadow:0 0 8px rgba(0,240,255,0.3);
+}
+
+#learn a:focus{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+

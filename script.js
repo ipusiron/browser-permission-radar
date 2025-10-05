@@ -1,41 +1,81 @@
-// Browser Permission Radar — Day092 (multi radar + score link + point→details jump)
+/**
+ * Browser Permission Radar — Day092
+ *
+ * ブラウザ権限をカテゴリ別レーダーチャートで可視化する教育ツール
+ * - カテゴリ別レーダーチャート（デバイス / データ / 通信）
+ * - インタラクティブな点クリック機能
+ * - 安全な権限テスト機能
+ * - アコーディオン式座学タブ
+ *
+ * @author ipusiron
+ * @license MIT
+ */
 
 (() => {
-  // ----- Tabs -----
+  'use strict';
+
+  // ========================================
+  // Security: Frame-busting
+  // ========================================
+  // クリックジャッキング対策（meta X-Frame-Optionsはmetaタグで機能しないため）
+  if (window.top !== window.self) {
+    window.top.location = window.self.location;
+  }
+
+  // ========================================
+  // Tab Management
+  // ========================================
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.panel');
+
+  /**
+   * タブを切り替える
+   * @param {string} id - タブのID ('radar', 'details', 'learn')
+   */
   function selectTab(id){
     tabs.forEach(b => b.classList.toggle('active', b.dataset.tab===id));
     panels.forEach(p => p.classList.toggle('visible', p.id===id));
   }
+
   tabs.forEach(btn => btn.addEventListener('click', () => selectTab(btn.dataset.tab)));
 
-  // ----- Elements -----
+  // ========================================
+  // DOM Elements
+  // ========================================
+
+  // レーダーチャート用キャンバス要素
   const canvases = {
     device: /** @type {HTMLCanvasElement} */ (document.getElementById('radarDevice')),
     data:   /** @type {HTMLCanvasElement} */ (document.getElementById('radarData')),
     comm:   /** @type {HTMLCanvasElement} */ (document.getElementById('radarComm')),
   };
+
+  // 2Dコンテキスト
   const ctxs = {
     device: canvases.device.getContext('2d'),
     data: canvases.data.getContext('2d'),
     comm: canvases.comm.getContext('2d'),
   };
+
+  // スコア表示要素
   const scoreEls = {
     device: document.getElementById('score-device'),
     data:   document.getElementById('score-data'),
     comm:   document.getElementById('score-comm'),
   };
+
+  // スコアリンクボタン（クリックでDetailsタブへフィルタリング）
   const scoreLinks = {
     device: document.getElementById('scoreLink-device'),
     data:   document.getElementById('scoreLink-data'),
     comm:   document.getElementById('scoreLink-comm'),
   };
 
+  // 詳細テーブルとログ
   const permTableWrap = document.getElementById('permTableWrap');
   const logEl = document.getElementById('log');
 
-  // Buttons (tests)
+  // 権限テストボタン
   const rescanBtn = document.getElementById('rescanBtn');
   const askNotif = document.getElementById('askNotif');
   const getGeo = document.getElementById('getGeo');
@@ -47,16 +87,145 @@
   const askPersist = document.getElementById('askPersist');
   const testBgSync = document.getElementById('testBgSync');
 
-  // Category filter chips
+  // カテゴリフィルターチップ
   const chips = document.querySelectorAll('.chip');
 
-  // ----- Data model -----
+  // ========================================
+  // Tooltip System
+  // ========================================
+  // ツールチップ要素を動的に作成
+  const tooltipEl = document.createElement('div');
+  tooltipEl.className = 'tooltip-bubble';
+  document.body.appendChild(tooltipEl);
+
+  let activeTooltipTarget = null;
+  const TOOLTIP_PADDING = 12;
+
+  /**
+   * ツールチップの位置を計算して配置
+   * 画面端で自動的に位置調整を行う
+   * @param {HTMLElement} target - ツールチップのターゲット要素
+   */
+  function positionTooltip(target){
+    if (!target || !activeTooltipTarget) return;
+    const rect = target.getBoundingClientRect();
+    const tipRect = tooltipEl.getBoundingClientRect();
+
+    let left = rect.right + TOOLTIP_PADDING;
+    if (left + tipRect.width + TOOLTIP_PADDING > window.innerWidth) {
+      left = rect.left - tipRect.width - TOOLTIP_PADDING;
+    }
+    if (left < TOOLTIP_PADDING) {
+      left = Math.max(TOOLTIP_PADDING, rect.left + (rect.width / 2) - (tipRect.width / 2));
+    }
+
+    let top = rect.top + (rect.height / 2) - (tipRect.height / 2);
+    const maxTop = window.innerHeight - TOOLTIP_PADDING - tipRect.height;
+    if (top < TOOLTIP_PADDING) top = TOOLTIP_PADDING;
+    if (top > maxTop) top = maxTop;
+
+    tooltipEl.style.left = `${Math.round(left)}px`;
+    tooltipEl.style.top = `${Math.round(top)}px`;
+  }
+
+  function showTooltip(event){
+    const target = event.currentTarget;
+    const text = target.getAttribute('data-tooltip');
+    if (!text) return;
+
+    activeTooltipTarget = target;
+    tooltipEl.textContent = text;
+    tooltipEl.classList.add('visible');
+    tooltipEl.style.visibility = 'hidden';
+    tooltipEl.style.left = '0px';
+    tooltipEl.style.top = '0px';
+
+    requestAnimationFrame(() => {
+      if (activeTooltipTarget !== target) return;
+      // Force layout to get correct size before positioning
+      tooltipEl.getBoundingClientRect();
+      positionTooltip(target);
+      tooltipEl.style.visibility = 'visible';
+    });
+  }
+
+  function hideTooltip(){
+    activeTooltipTarget = null;
+    tooltipEl.classList.remove('visible');
+    tooltipEl.style.visibility = '';
+  }
+
+  function attachTooltipHandlers(root = document){
+    root.querySelectorAll('.help-icon, .help-icon-small').forEach(icon => {
+      if (icon.dataset.tooltipBound) return;
+      icon.dataset.tooltipBound = '1';
+      icon.addEventListener('mouseenter', showTooltip);
+      icon.addEventListener('focus', showTooltip);
+      icon.addEventListener('mouseleave', hideTooltip);
+      icon.addEventListener('blur', hideTooltip);
+    });
+  }
+
+  attachTooltipHandlers();
+
+  window.addEventListener('scroll', () => {
+    if (!activeTooltipTarget) return;
+    tooltipEl.style.visibility = 'hidden';
+    requestAnimationFrame(() => {
+      if (!activeTooltipTarget) return;
+      positionTooltip(activeTooltipTarget);
+      tooltipEl.style.visibility = 'visible';
+    });
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    if (!activeTooltipTarget) return;
+    tooltipEl.style.visibility = 'hidden';
+    requestAnimationFrame(() => {
+      if (!activeTooltipTarget) return;
+      positionTooltip(activeTooltipTarget);
+      tooltipEl.style.visibility = 'visible';
+    });
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      hideTooltip();
+    }
+  });
+
+  // ========================================
+  // XSS Protection: HTML Escape Utility
+  // ========================================
+  /**
+   * HTML特殊文字をエスケープしてXSS攻撃を防ぐ
+   * @param {string} text - エスケープするテキスト
+   * @return {string} エスケープされたテキスト
+   */
+  function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+  }
+
+  // ========================================
+  // Data Model: Permission Groups & Definitions
+  // ========================================
+
+  // カテゴリ別権限グループ定義
   const GROUPS = {
     device: ['camera','microphone','geolocation','midi'],
     data: ['clipboard-read','clipboard-write','persistent-storage','background-sync'],
     comm: ['notifications','push','payment-handler','idle-detection'],
   };
 
+  // 権限の詳細定義（キー、descriptor、説明）
   const PERMS = [
     { key: 'geolocation',        descriptor: { name: 'geolocation' }, desc: '現在地の緯度・経度を取得します。\n\nリスク: 行動追跡・居場所特定' },
     { key: 'notifications',      descriptor: { name: 'notifications' }, desc: 'プッシュ通知を表示します。\n\nリスク: スパム通知・\nフィッシングサイトへの誘導' },
@@ -119,7 +288,15 @@
     return results;
   }
 
-  // ----- Score / state helpers -----
+  // ========================================
+  // Scoring & State Helpers
+  // ========================================
+
+  /**
+   * 権限状態をスコア（0.0〜1.0）に変換
+   * @param {string} state - 権限の状態 ('granted', 'prompt', 'denied', 'unsupported')
+   * @return {number} スコア値
+   */
   function stateToScore(state) {
     switch (state) {
       case 'granted': return 1.0;
@@ -144,25 +321,34 @@
   let currentFilter = 'all';
 
   function renderTable(results){
+    if (activeTooltipTarget && !document.body.contains(activeTooltipTarget)) {
+      hideTooltip();
+    }
+    hideTooltip();
     const rows = results.map(r => {
-      const id = `perm-row-${r.key}`;
+      const id = `perm-row-${escapeHtml(r.key)}`;
       const badge = r.state==='granted'?badges.granted():r.state==='denied'?badges.denied():r.state==='prompt'?badges.prompt():badges.unsupported();
       const group = Object.entries(GROUPS).find(([,list]) => list.includes(r.key))?.[0] || 'other';
       const permInfo = PERMS.find(p => p.key === r.key);
       const description = permInfo?.desc || '';
-      return `<tr id="${id}" data-group="${group}">
+      const escapedKey = escapeHtml(r.key);
+      const escapedGroup = escapeHtml(group);
+      const escapedDesc = escapeHtml(description);
+      return `<tr id="${id}" data-group="${escapedGroup}">
         <td>
-          <a href="#${id}" data-rowlink="${r.key}"><code>${r.key}</code></a>
-          ${description ? `<span class="help-icon help-icon-small" data-tooltip="${description}">?</span>` : ''}
+          <a href="#${id}" data-rowlink="${escapedKey}"><code>${escapedKey}</code></a>
+          ${description ? `<span class="help-icon help-icon-small" data-tooltip="${escapedDesc}">?</span>` : ''}
         </td>
         <td>${badge}</td>
-        <td class="muted">${group}</td>
+        <td class="muted">${escapedGroup}</td>
       </tr>`;
     }).join('');
     permTableWrap.innerHTML = `<table>
       <thead><tr><th>permission</th><th>status</th><th>group</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+
+    attachTooltipHandlers(permTableWrap);
 
     // row link click -> soft highlight
     permTableWrap.querySelectorAll('a[data-rowlink]').forEach(a=>{
@@ -190,10 +376,23 @@
     ch.addEventListener('click', ()=>applyFilter(ch.dataset.filter));
   });
 
-  // ----- Radar rendering (per group) with clickable points -----
-  /** store click maps: group -> [{x,y,key,r}] */
+  // ========================================
+  // Radar Chart Rendering with Clickable Points
+  // ========================================
+
+  /**
+   * クリック可能な点の座標を保存
+   * @type {Object.<string, Array<{x: number, y: number, key: string, r: number}>>}
+   */
   const clickMaps = { device:[], data:[], comm:[] };
 
+  /**
+   * カテゴリごとのレーダーチャートを描画
+   * @param {string} groupKey - カテゴリキー ('device', 'data', 'comm')
+   * @param {Array} results - 権限スキャン結果
+   * @param {HTMLCanvasElement} canvas - キャンバス要素
+   * @param {CanvasRenderingContext2D} ctx - 2Dコンテキスト
+   */
   function drawRadarGroup(groupKey, results, canvas, ctx){
     const list = GROUPS[groupKey];
     const subset = results.filter(r => list.includes(r.key));
@@ -224,7 +423,7 @@
     });
     ctx.globalAlpha = 1;
 
-    // axes + labels
+    // axes
     ctx.globalAlpha = 0.4;
     for(let i=0;i<N;i++){
       const a = (-Math.PI/2) + (i*(2*Math.PI/N));
@@ -235,26 +434,7 @@
     }
     ctx.globalAlpha = 1;
 
-    // Draw labels with enhanced visibility
-    ctx.font = 'bold 13px "Courier New", monospace';
-    for(let i=0;i<N;i++){
-      const a = (-Math.PI/2) + (i*(2*Math.PI/N));
-      const label = subset[i]?.key ?? '';
-      const lx = cx + Math.cos(a)*(R+30);
-      const ly = cy + Math.sin(a)*(R+30);
-      ctx.textAlign = Math.cos(a)>0.1?'left':(Math.cos(a)<-0.1?'right':'center');
-      ctx.textBaseline = Math.sin(a)>0.1?'top':(Math.sin(a)<-0.1?'bottom':'middle');
-
-      // Draw text shadow for contrast
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.fillText(label.toUpperCase(), lx+1, ly+1);
-
-      // Draw main text
-      ctx.fillStyle = '#00f0ff';
-      ctx.fillText(label.toUpperCase(), lx, ly);
-    }
-
-    // polygon
+    // polygon (draw before labels so labels appear on top)
     const pts = subset.map((r,i)=>{
       const a = (-Math.PI/2) + (i*(2*Math.PI/N));
       const rad = R*stateToScore(r.state);
@@ -280,7 +460,81 @@
       ctx.shadowBlur = 0;
     }
 
-    // points with glow effect
+    // Draw labels using floating callouts to avoid clipping (drawn after polygon but before points)
+    const axisColor = getComputedStyle(document.body).getPropertyValue('--accent') || '#00f0ff';
+    const labelBg = 'rgba(6, 14, 28, 0.98)';  // Increased opacity from 0.92 to 0.98
+    const labelBorder = 'rgba(0, 240, 255, 0.6)';  // Increased opacity from 0.45 to 0.6
+    const labelTextColor = '#00f0ff';
+    const labelShadowColor = 'rgba(0, 0, 0, 0.9)';  // Increased opacity from 0.7 to 0.9
+    const labelMargin = 12;
+    const padX = 10;
+    const padY = 6;
+    const lineHeight = 16;
+    ctx.font = '600 13px "Segoe UI", "Hiragino Sans", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    for(let i=0;i<N;i++){
+      const a = (-Math.PI/2) + (i*(2*Math.PI/N));
+      const key = subset[i]?.key;
+      if (!key) continue;
+
+      const segments = key.split('-').map(part => part.trim()).filter(Boolean);
+      const lines = (segments.length ? segments : [key]).map(text => text.toUpperCase());
+      const widths = lines.map(line => ctx.measureText(line).width);
+      const textWidth = widths.length ? Math.max(...widths) : 0;
+      const textHeight = lineHeight * (lines.length || 1);
+      const boxWidth = textWidth + padX * 2;
+      const boxHeight = textHeight + padY * 2;
+
+      const axisEndX = cx + Math.cos(a) * R;
+      const axisEndY = cy + Math.sin(a) * R;
+
+      let boxX = cx + Math.cos(a) * (R + 28) - boxWidth / 2;
+      let boxY = cy + Math.sin(a) * (R + 28) - boxHeight / 2;
+      boxX += Math.cos(a) * 10;
+      boxY += Math.sin(a) * 10;
+
+      if (boxX < labelMargin) boxX = labelMargin;
+      if (boxX + boxWidth > W - labelMargin) boxX = W - labelMargin - boxWidth;
+      if (boxY < labelMargin) boxY = labelMargin;
+      if (boxY + boxHeight > H - labelMargin) boxY = H - labelMargin - boxHeight;
+
+      const centerX = boxX + boxWidth / 2;
+      const centerY = boxY + boxHeight / 2;
+
+      ctx.strokeStyle = axisColor;
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath();
+      ctx.moveTo(axisEndX, axisEndY);
+      ctx.lineTo(centerX, centerY);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = labelBg;
+      ctx.strokeStyle = labelBorder;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 6);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+      }
+
+      lines.forEach((line, idx) => {
+        const textX = boxX + padX;
+        const textY = boxY + padY + idx * lineHeight;
+        ctx.fillStyle = labelShadowColor;
+        ctx.fillText(line, textX + 1, textY + 1);
+        ctx.fillStyle = labelTextColor;
+        ctx.fillText(line, textX, textY);
+      });
+    }
+
+    // points with glow effect (drawn last so they appear on top)
     clickMaps[groupKey] = [];
     pts.forEach(p=>{
       const color =
@@ -300,7 +554,7 @@
       ctx.fillStyle = color; ctx.fill();
       ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
 
-      clickMaps[groupKey].push({x:p.x,y:p.y,key:p.key,r:8});
+      clickMaps[groupKey].push({x:p.x,y:p.y,key:p.key,r:30});
     });
   }
 
@@ -322,12 +576,14 @@
         // jump to details and highlight the row
         selectTab('details');
         // auto filter to group
-        applyFilter(groupKey);
-        const row = document.getElementById(`perm-row-${target.key}`);
-        if (row){
-          row.scrollIntoView({behavior:'smooth', block:'center'});
-          row.classList.remove('highlight'); void row.offsetWidth; row.classList.add('highlight');
-        }
+        requestAnimationFrame(() => {
+          applyFilter(groupKey);
+          const row = document.getElementById(`perm-row-${target.key}`);
+          if (row){
+            row.scrollIntoView({behavior:'smooth', block:'center'});
+            row.classList.remove('highlight'); void row.offsetWidth; row.classList.add('highlight');
+          }
+        });
       }
     });
   }
@@ -357,7 +613,13 @@
     logEl.textContent = `[${time}] ${msg}\n` + lines.join('\n');
   };
 
-  // ----- Tests (safe minimal) -----
+  // ========================================
+  // Safe Permission Tests
+  // ========================================
+  // 各権限を安全にテストするためのイベントハンドラー
+  // - カメラ・マイクは即座に停止
+  // - 位置情報・クリップボードの内容は非表示
+  // - すべてユーザー操作が必要
   document.getElementById('askNotif').addEventListener('click', async ()=>{
     if (!('Notification' in window)) return log('Notifications unsupported.');
     try{
@@ -370,7 +632,7 @@
   document.getElementById('getGeo').addEventListener('click', ()=>{
     if (!('geolocation' in navigator)) return log('Geolocation unsupported.');
     navigator.geolocation.getCurrentPosition(
-      pos => { log(`Geolocation ok: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`); rescan(); },
+      pos => { log(`Geolocation OK: Permission granted (coordinates hidden for privacy)`); rescan(); },
       err => { log(`Geolocation error: ${err.code} ${err.message}`); rescan(); },
       { enableHighAccuracy:false, timeout:5000, maximumAge:0 }
     );
@@ -402,7 +664,7 @@
     if (!navigator.clipboard) return log('Clipboard API unsupported.');
     try{
       const txt = await navigator.clipboard.readText();
-      log(`Clipboard read OK: ${txt ? '(non-empty text)' : '(empty)'}`);
+      log(`Clipboard read OK: Permission granted (content hidden for privacy)`);
       await rescan();
     }catch(e){ log(`Clipboard read error: ${e.message}`); await rescan(); }
   });
@@ -465,6 +727,28 @@
   setupCanvasClick('data',   canvases.data);
   setupCanvasClick('comm',   canvases.comm);
 
-  // init
+  // ========================================
+  // Accordion Functionality (Learn Tab)
+  // ========================================
+  /**
+   * 座学タブのアコーディオン機能
+   * 各見出しをクリックで展開・折りたたみ
+   */
+  const accordionHeaders = document.querySelectorAll('.accordion-header');
+  accordionHeaders.forEach(header => {
+    header.addEventListener('click', () => {
+      const targetId = header.getAttribute('data-accordion');
+      const content = document.querySelector(`[data-accordion-content="${targetId}"]`);
+
+      // アクティブ状態をトグル
+      header.classList.toggle('active');
+      content.classList.toggle('active');
+    });
+  });
+
+  // ========================================
+  // Initialization
+  // ========================================
+  // 初期スキャンを実行
   rescan();
 })();

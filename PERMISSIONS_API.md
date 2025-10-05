@@ -10,14 +10,14 @@
 2. [基本仕様](#基本仕様)
 3. [本ツールでの実装](#本ツールでの実装)
 4. [対応権限一覧](#対応権限一覧)
-5. [ブラウザ互換性とフォールバック](#ブラウザ互換性とフォールバック)
+5. [ブラウザー互換性とフォールバック](#ブラウザー互換性とフォールバック)
 6. [参考資料](#参考資料)
 
 ---
 
 ## Permissions APIとは
 
-**Permissions API**は、Web APIの権限状態をプログラム的に照会するための標準化されたインターフェースです。
+**Permissions API**は、Web APIの権限状態をプログラム的に照会するための標準化されたインターフェイスです。
 
 ### 特徴
 
@@ -30,9 +30,9 @@
 
 ## 基本仕様
 
-### コアインターフェース
+### コアインターフェイス
 
-#### 1. `Permissions` インターフェース
+#### 1. `Permissions` インターフェイス
 
 ```javascript
 // アクセス方法
@@ -43,7 +43,7 @@ navigator.permissions
 
 - `query(descriptor)` - 権限状態を照会（Promiseを返す）
 
-#### 2. `PermissionStatus` インターフェース
+#### 2. `PermissionStatus` インターフェイス
 
 権限照会の結果として返されるオブジェクト。
 
@@ -157,7 +157,7 @@ async function scanAllPermissions() {
 
 ---
 
-## ブラウザ互換性とフォールバック
+## ブラウザー互換性とフォールバック
 
 ### Permissions API対応状況
 
@@ -264,7 +264,7 @@ async function testCamera() {
 - [MediaDevices API](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices)
 - [Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API)
 
-### ブラウザ互換性
+### ブラウザー互換性
 
 - [Can I use: Permissions API](https://caniuse.com/permissions-api)
 
@@ -272,11 +272,11 @@ async function testCamera() {
 
 ## まとめ
 
-Permissions APIは、ブラウザ権限の透明性を高める重要な標準APIです。本ツールでは:
+Permissions APIは、ブラウザー権限の透明性を高める重要な標準APIです。本ツールでは:
 
 1. **統一的な照会**: 様々な権限を一貫した方法でチェック
-2. **フォールバック戦略**: 未対応ブラウザでも動作
+2. **フォールバック戦略**: 未対応ブラウザーでも動作
 3. **教育的可視化**: スコアリングとレーダーチャートで直感的に理解
 4. **安全なテスト**: 最小権限の原則に基づいた実装
 
-これにより、ユーザーは「ブラウザが何を要求できるか」を体験的に学ぶことができます。
+これにより、ユーザーは「ブラウザーが何を要求できるか」を体験的に学ぶことができます。
