@@ -23,29 +23,30 @@ This is a static HTML/CSS/JavaScript application with no build process:
 ### File Structure
 
 - `index.html` - Main page structure with 3 tabs (Radar, Details, Learn)
-- `script.js` - Core logic (~380 lines, IIFE pattern)
+- `script.js` - Core logic (~755 lines, IIFE pattern)
 - `style.css` - Styling with CSS custom properties and dark mode support
 
 ### Core Components (script.js)
 
-**Permission Categories** (lines 52-56):
+**Permission Categories** (lines 222-226):
 - `device`: camera, microphone, geolocation, midi
 - `data`: clipboard-read, clipboard-write, persistent-storage, background-sync
-- `comm`: notifications
+- `comm`: notifications, push, payment-handler, idle-detection
 
 **Data Flow**:
-1. `scanAllPermissions()` (lines 96-104) - Queries all permissions using Permissions API
-2. `queryPermission()` / `featureFallback()` (lines 73-94) - Handles browser compatibility
-3. `drawRadarGroup()` (lines 176-242) - Renders category-specific radar charts on canvas
-4. `renderTable()` (lines 130-156) - Displays detailed permission table
+1. `scanAllPermissions()` (lines 273-289) - Queries all permissions using Permissions API
+2. `queryPermission()` / `featureFallback()` (lines 247-272) - Handles browser compatibility
+3. `drawRadarGroup()` (lines 396-559) - Renders category-specific radar charts on canvas
+4. `renderTable()` (lines 323-363) - Displays detailed permission table
 
 **Interactive Features**:
-- **Radar point clicks** (lines 247-270): Click points on radar → jump to Details tab and highlight row
-- **Score links** (lines 273-284): Click category score → filter Details tab by category
-- **Category filters** (lines 158-166): Chip buttons to filter Details table
-- **Safe permission tests** (lines 292-358): Minimal permission request buttons with auto-cleanup
+- **Radar point clicks** (lines 564-589): Click points on radar → jump to Details tab and highlight row
+- **Score links** (lines 592-603): Click category score → filter Details tab by category
+- **Category filters** (lines 365-377): Chip buttons to filter Details table
+- **Safe permission tests** (lines 623-709): Minimal permission request buttons with auto-cleanup
+- **Tooltip system** (lines 94-196): Smart positioning tooltips for permission descriptions
 
-**Scoring System** (lines 107-113):
+**Scoring System** (lines 300-307):
 - `granted`: 1.0
 - `prompt`: 0.5
 - `denied`: 0.1
@@ -53,41 +54,65 @@ This is a static HTML/CSS/JavaScript application with no build process:
 
 ### Canvas Rendering Details
 
-Radar charts use HTML5 Canvas (lines 176-242):
+Radar charts use HTML5 Canvas (lines 396-559):
 - Draws concentric circles (0.25, 0.5, 0.75, 1.0 scale)
 - Plots polygon based on permission scores
-- Stores click maps for hit detection (`clickMaps` object at line 174)
+- Stores click maps for hit detection (`clickMaps` object at line 387)
 - Uses CSS custom properties for colors (--granted, --prompt, --denied, --unsupported)
+- Floating label callouts with cyberpunk styling (lines 463-535)
 
 ### Browser API Integration
 
 The tool uses modern browser APIs with fallback detection:
-- **Permissions API**: `navigator.permissions.query()` (line 76)
-- **Notifications**: `Notification.requestPermission()` (line 296)
-- **Geolocation**: `navigator.geolocation.getCurrentPosition()` (line 304)
-- **Media Devices**: `navigator.mediaDevices.getUserMedia()` (line 314)
-- **Clipboard**: `navigator.clipboard.readText()` / `writeText()` (lines 325, 334)
-- **MIDI**: `navigator.requestMIDIAccess()` (line 343)
-- **Storage**: `navigator.storage.persist()` (line 354)
+- **Permissions API**: `navigator.permissions.query()` (line 250)
+- **Notifications**: `Notification.requestPermission()` (line 626)
+- **Geolocation**: `navigator.geolocation.getCurrentPosition()` (line 634)
+- **Media Devices**: `navigator.mediaDevices.getUserMedia()` (lines 644, 655)
+- **Clipboard**: `navigator.clipboard.readText()` / `writeText()` (lines 666, 675)
+- **MIDI**: `navigator.requestMIDIAccess()` (line 684)
+- **Storage**: `navigator.storage.persist()` (line 695)
+- **Background Sync**: `registration.sync.register()` (line 705)
 
-All permission tests immediately clean up resources (e.g., `stream.getTracks().forEach(t => t.stop())` at line 316).
+All permission tests immediately clean up resources (e.g., `stream.getTracks().forEach(t => t.stop())` at lines 646, 657).
 
 ## Development Guidelines
 
+### Local Development
+
+Serve locally (secure context needed for many APIs):
+- Python: `python -m http.server 8080` → open `http://localhost:8080`
+- Node: `npx http-server -p 8080`
+- VS Code: "Live Server" extension
+
+Note: `file://` protocol will not work - permissions require `localhost` or HTTPS.
+
+### Coding Conventions
+
+- Indentation: 2 spaces; UTF-8
+- HTML classes: kebab-case (e.g., `score-link`); IDs: camelCase (e.g., `radarDevice`)
+- JS: ES2015+; `const`/`let`; functions lowerCamelCase; constants UPPER_SNAKE
+- Keep IIFE pattern; avoid global leaks; no external runtime dependencies
+
 ### Modifying Permissions List
 
-To add new permissions, update two locations:
-1. Add to appropriate category in `GROUPS` object (script.js:52-56)
-2. Add entry to `PERMS` array (script.js:58-68)
-3. Optional: Add fallback detection in `featureFallback()` (script.js:82-94)
-4. Optional: Add test button and handler (script.js:292-358)
+To add new permissions:
+1. Add to appropriate category in `GROUPS` object (script.js:222-226)
+2. Add entry to `PERMS` array with key, descriptor, and desc (script.js:229-242)
+3. Optional: Add fallback detection in `featureFallback()` (script.js:256-272)
+4. Optional: Add test button in index.html and handler in script.js (lines 623-709)
 
 ### Styling
 
-CSS uses custom properties for theming (style.css:1-24):
+CSS uses custom properties for theming:
 - Light/dark mode support via `@media (prefers-color-scheme: dark)`
 - Color variables: `--granted`, `--prompt`, `--denied`, `--unsupported`, `--highlight`
 - Responsive grid: 3 columns → 2 columns (≤1200px) → 1 column (≤860px)
+
+### Testing
+
+- Manual: Run locally, verify Quick Tests buttons and that scores/radars/tables update
+- Cross-browser: Test Chrome, Firefox, Edge; normal + private windows
+- Many permissions behave differently in private/incognito mode
 
 ### Security & Privacy Principles
 

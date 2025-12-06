@@ -1,11 +1,41 @@
 <!--
 ---
-title: Browser Permission Radar
-category: browser-security
-difficulty: 2
-description: Category-wise radar charts to visualize browser permission states with safe, on-page permission tests and score-linked details.
-tags: [security, privacy, permissions, browser, education, javascript]
-demo: https://ipusiron.github.io/browser-permission-radar/
+id: day092
+slug: browser-permission-radar
+
+title: "Browser Permission Radar"
+
+subtitle_ja: "ブラウザー権限可視化ツール"
+subtitle_en: "Browser Permission Visualization Tool"
+
+description_ja: "ブラウザーの主要権限（位置情報・カメラ・マイク・通知・クリップボードなど）をカテゴリ別レーダーチャート＋スコア表示で可視化し、安全な権限テストを体験できる教育ツール"
+description_en: "Category-wise radar charts to visualize browser permission states with safe, on-page permission tests and score-linked details"
+
+category_ja:
+  - ブラウザーセキュリティ
+  - プライバシー
+  - Webセキュリティ
+category_en:
+  - Browser Security
+  - Privacy
+  - Web Security
+
+difficulty: 3
+
+tags:
+  - security
+  - privacy
+  - permissions
+  - browser
+  - education
+  - javascript
+  - radar-chart
+  - visualization
+
+repo_url: "https://github.com/ipusiron/browser-permission-radar"
+demo_url: "https://ipusiron.github.io/browser-permission-radar/"
+
+hub: true
 ---
 -->
 
