@@ -30,6 +30,7 @@
   --prompt: #ffd700;       /* 未決定（黄） */
   --denied: #ff3366;       /* 拒否済み（赤） */
   --unsupported: #6b7280;  /* 未対応（グレー） */
+  --unknown: #b48cff;      /* 照会できない（紫） */
 
   /* ハイライト */
   --highlight: rgba(0, 240, 255, 0.2);
@@ -172,6 +173,7 @@ canvas{
 .legend-dot.prompt{background:var(--prompt); box-shadow:0 0 6px var(--prompt)}
 .legend-dot.denied{background:var(--denied); box-shadow:0 0 6px var(--denied)}
 .legend-dot.unsupported{background:var(--unsupported); box-shadow:0 0 4px var(--unsupported)}
+.legend-dot.unknown{background:var(--unknown); box-shadow:0 0 4px var(--unknown)}
 
 button{
   padding:10px 16px;
@@ -360,6 +362,10 @@ td code{
 .status-prompt{background:rgba(255,215,0,0.15); color:var(--prompt); border-color:var(--prompt)}
 .status-denied{background:rgba(255,51,102,0.15); color:var(--denied); border-color:var(--denied)}
 .status-unsupported{background:rgba(107,114,128,0.15); color:var(--unsupported); border-color:var(--unsupported)}
+.status-unknown{background:rgba(180,140,255,0.12); color:var(--unknown); border-color:var(--unknown)}
+.mismatch-note{margin-top:4px; color:var(--prompt); font-size:12px}
+.score-measured{margin:-4px 0 0}
+[hidden]{display:none !important}
 
 .chip{
   padding:8px 14px;
