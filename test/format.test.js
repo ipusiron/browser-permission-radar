@@ -16,11 +16,15 @@ function listFiles(dir, ext) {
 const CODE = ['script.js', ...listFiles('js', '.js'), ...listFiles('test', '.js'), 'style.css'];
 const DOCS = ['README.md', 'CLAUDE.md', 'AGENTS.md', 'TECHNICAL.md', 'PERMISSIONS_API.md'];
 
-test('JS・CSS・テストの1行は160文字以下（詰め込みを検出する）', () => {
+test('JS・CSS・テストの1行は160文字以下（詰め込みを検出する。文言の辞書は1件1行で400文字まで）', () => {
   for (const f of CODE) {
+    const limit = f === 'js/messages.js' ? 400 : 160;
     const max = Math.max(...read(f).split('\n').map(l => [...l].length));
-    assert.ok(max <= 160, `${f}: 最長 ${max} 文字`);
+    assert.ok(max <= limit, `${f}: 最長 ${max} 文字`);
   }
+  // 辞書は1件1行（日英で400行以上）
+  const dict = read('js/messages.js').split('\n').filter(l => /^\s+"[\w.-]+": "/.test(l));
+  assert.ok(dict.length >= 400, `辞書の行が少ない（${dict.length}）`);
 });
 
 test('index.html の1行は250文字以下', () => {

@@ -1,10 +1,13 @@
 {
-  "note": "2026-10-10 に Playwright 1.58 で公開ページを開いた直後の navigator.permissions.query() の生の結果（ERR は reject の例外名）。__notification は Notification.permission",
+  "note": "2026-10-10 に Playwright 1.58 で公開ページを開いた直後の navigator.permissions.query() の生の結果（ERR は reject の例外名）。__notification は Notification.permission。6つの追加の権限（local-network など）は同じ日にローカル配信のページで照会した値（iframe の2件は12権限のみ）",
   "features_absent": {
     "firefox": [
       "SyncManager",
       "PaymentManager",
-      "IdleDetector"
+      "IdleDetector",
+      "queryLocalFonts",
+      "getScreenDetails",
+      "Accelerometer"
     ]
   },
   "edge": {
@@ -20,6 +23,12 @@
     "push": "prompt",
     "payment-handler": "granted",
     "idle-detection": "prompt",
+    "local-network": "prompt",
+    "storage-access": "granted",
+    "screen-wake-lock": "granted",
+    "window-management": "prompt",
+    "local-fonts": "prompt",
+    "accelerometer": "granted",
     "__notification": "default"
   },
   "firefox": {
@@ -35,6 +44,12 @@
     "push": "prompt",
     "payment-handler": "ERR TypeError",
     "idle-detection": "ERR TypeError",
+    "local-network": "ERR TypeError",
+    "storage-access": "prompt",
+    "screen-wake-lock": "granted",
+    "window-management": "ERR TypeError",
+    "local-fonts": "ERR TypeError",
+    "accelerometer": "ERR TypeError",
     "__notification": "default"
   },
   "chromium_headless_shell": {
@@ -50,6 +65,12 @@
     "push": "prompt",
     "payment-handler": "prompt",
     "idle-detection": "prompt",
+    "local-network": "prompt",
+    "storage-access": "prompt",
+    "screen-wake-lock": "prompt",
+    "window-management": "prompt",
+    "local-fonts": "prompt",
+    "accelerometer": "prompt",
     "__notification": "denied"
   },
   "edge_iframe_no_allow": {
@@ -81,5 +102,92 @@
     "payment-handler": "granted",
     "idle-detection": "prompt",
     "__notification": "denied"
+  },
+  "policy_all_none": {
+    "note": "埋め込みタブで「すべて止める」にして照会した結果（同じオリジンの iframe、ローカル配信、2026-10-10）。値は画面と同じ分類のあとの状態",
+    "edge": {
+      "top": {
+        "geolocation": "prompt",
+        "camera": "prompt",
+        "microphone": "prompt",
+        "midi": "prompt",
+        "clipboard-read": "prompt",
+        "clipboard-write": "granted",
+        "persistent-storage": "prompt",
+        "background-sync": "granted",
+        "notifications": "prompt",
+        "push": "prompt",
+        "payment-handler": "granted",
+        "idle-detection": "prompt",
+        "local-network": "prompt",
+        "storage-access": "granted",
+        "screen-wake-lock": "granted",
+        "window-management": "prompt",
+        "local-fonts": "prompt",
+        "accelerometer": "granted"
+      },
+      "frame": {
+        "geolocation": "denied",
+        "camera": "denied",
+        "microphone": "denied",
+        "midi": "denied",
+        "clipboard-read": "denied",
+        "clipboard-write": "denied",
+        "persistent-storage": "prompt",
+        "background-sync": "granted",
+        "notifications": "prompt",
+        "push": "prompt",
+        "payment-handler": "granted",
+        "idle-detection": "denied",
+        "local-network": "prompt",
+        "storage-access": "denied",
+        "screen-wake-lock": "denied",
+        "window-management": "denied",
+        "local-fonts": "denied",
+        "accelerometer": "granted"
+      }
+    },
+    "firefox": {
+      "top": {
+        "geolocation": "prompt",
+        "camera": "prompt",
+        "microphone": "prompt",
+        "midi": "prompt",
+        "clipboard-read": "unknown",
+        "clipboard-write": "unknown",
+        "persistent-storage": "prompt",
+        "background-sync": "unsupported",
+        "notifications": "prompt",
+        "push": "prompt",
+        "payment-handler": "unsupported",
+        "idle-detection": "unsupported",
+        "local-network": "unsupported",
+        "storage-access": "prompt",
+        "screen-wake-lock": "granted",
+        "window-management": "unsupported",
+        "local-fonts": "unsupported",
+        "accelerometer": "unsupported"
+      },
+      "frame": {
+        "geolocation": "denied",
+        "camera": "denied",
+        "microphone": "denied",
+        "midi": "prompt",
+        "clipboard-read": "unknown",
+        "clipboard-write": "unknown",
+        "persistent-storage": "prompt",
+        "background-sync": "unsupported",
+        "notifications": "prompt",
+        "push": "prompt",
+        "payment-handler": "unsupported",
+        "idle-detection": "unsupported",
+        "local-network": "unsupported",
+        "storage-access": "prompt",
+        "screen-wake-lock": "denied",
+        "window-management": "unsupported",
+        "local-fonts": "unsupported",
+        "accelerometer": "unsupported"
+      }
+    }
   }
 }

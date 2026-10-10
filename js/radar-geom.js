@@ -73,8 +73,29 @@ export function labelBox(angle, w, h, size = SIZE, radius = RADIUS) {
   let x = cos > 0.25 ? ax : cos < -0.25 ? ax - w : ax - w / 2;
   let y = sin > 0.25 ? ay : sin < -0.25 ? ay - h : ay - h / 2;
   const m = LABEL.margin;
-  x = Math.min(Math.max(x, m), size - m - w);
-  y = Math.min(Math.max(y, m), size - m - h);
+  const clamp = () => {
+    x = Math.min(Math.max(x, m), size - m - w);
+    y = Math.min(Math.max(y, m), size - m - h);
+  };
+  clamp();
+  // 端に寄せた結果、外周の点（granted）にかかったら、軸の向き（外側）へずらす
+  const px = c + cos * radius;
+  const py = c + sin * radius;
+  const keep = POINT_R + 3 + 2;
+  const sx = cos < 0 ? -1 : 1;
+  const sy = sin <= 0 ? -1 : 1;
+  const vertical = Math.abs(sin) >= Math.abs(cos);
+  for (let i = 0; i < 80 && circleRectOverlap(px, py, keep, { x, y, w, h }); i++) {
+    const bx = x;
+    const by = y;
+    if (vertical) y += sy; else x += sx;
+    clamp();
+    if (x === bx && y === by) {  // 端で動けなければ、もう一方の向きへ
+      if (vertical) x += sx; else y += sy;
+      clamp();
+      if (x === bx && y === by) break;
+    }
+  }
   return { x, y, w, h };
 }
 

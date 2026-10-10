@@ -6,7 +6,7 @@
  */
 
 /** カテゴリの並び（レーダーの順） */
-export const GROUP_ORDER = ['device', 'data', 'comm'];
+export const GROUP_ORDER = ['device', 'data', 'comm', 'extra'];
 
 /**
  * 権限の定義。並び順はカテゴリの中でレーダーの軸を時計回りに置く順（上から）。
@@ -26,6 +26,16 @@ export const PERMISSIONS = [
   { key: 'push', group: 'comm', descriptor: { name: 'push', userVisibleOnly: true }, feature: 'pushManager' },
   { key: 'payment-handler', group: 'comm', descriptor: { name: 'payment-handler' }, feature: 'paymentManager' },
   { key: 'idle-detection', group: 'comm', descriptor: { name: 'idle-detection' }, feature: 'idleDetector' },
+  // 新しめの権限（Chromium 系で照会できるものが多い）。local-network は Chrome 145 で local-network-access から分かれた名前
+  {
+    key: 'local-network', group: 'extra', descriptor: { name: 'local-network' },
+    descriptors: [{ name: 'local-network' }, { name: 'local-network-access' }], feature: 'localNetwork',
+  },
+  { key: 'storage-access', group: 'extra', descriptor: { name: 'storage-access' }, feature: 'storageAccess' },
+  { key: 'screen-wake-lock', group: 'extra', descriptor: { name: 'screen-wake-lock' }, feature: 'wakeLock' },
+  { key: 'window-management', group: 'extra', descriptor: { name: 'window-management' }, feature: 'windowManagement' },
+  { key: 'local-fonts', group: 'extra', descriptor: { name: 'local-fonts' }, feature: 'localFonts' },
+  { key: 'accelerometer', group: 'extra', descriptor: { name: 'accelerometer' }, feature: 'sensors' },
 ];
 
 /** カテゴリ → 権限キーの一覧（PERMISSIONS から作る） */

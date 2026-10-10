@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - Root files: `index.html`, `style.css`, `script.js` (UI glue, ES module), `sw.js` (Service Worker used only by the Background Sync test).
-- `js/`: pure modules (`perm-core.js`, `scanner.js`, `radar-geom.js`, `messages.js`, `i18n.js`) and the SVG renderer (`radar-svg.js`).
+- `js/`: pure modules (`perm-core.js`, `scanner.js`, `radar-geom.js`, `policy-core.js`, `compare-core.js`, `messages.js`, `i18n.js`), the SVG renderer (`radar-svg.js`) and the iframe query page logic (`probe.js` for `probe.html`).
 - `test/`: `node --test` suites and `fixtures/` (measured permission states).
 - Docs: `README.md`, `TECHNICAL.md`, `PERMISSIONS_API.md`, `CLAUDE.md`, `LICENSE` (MIT).
 
@@ -15,7 +15,7 @@
 - Indentation: 2 spaces; UTF-8; LF line endings.
 - HTML: semantic elements; classes in kebab-case (e.g., `score-link`); ids follow the existing camelCase pattern (e.g., `radarDevice`).
 - JS: ES modules; `const`/`let`; functions lowerCamelCase; constants UPPER_SNAKE. Keep DOM-free logic in `js/` so it stays testable.
-- UI strings go to `js/messages.js` and are read with `t()`.
+- UI strings go to `js/messages.js` (both `ja` and `en`) and are read with `t()`; static HTML text uses `data-i18n*` attributes.
 - No external runtime dependencies, no CDN, no inline styles or handlers (CSP has no `'unsafe-inline'`).
 
 ## Testing Guidelines
