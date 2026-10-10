@@ -727,3 +727,39 @@ td code{
   .topbar::before{display:none}
   .score-link:hover{transform:none}
 }
+
+/* ========================================
+   埋め込みの実験（Permissions Policy）
+   ======================================== */
+.policy-features{border:1px solid var(--border); margin:12px 0; padding:8px 12px 12px}
+.policy-features legend{color:var(--muted); font-size:13px; padding:0 6px}
+.policy-checks{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap:4px 12px}
+.policy-check{display:flex; align-items:center; gap:8px; min-height:44px; cursor:pointer; overflow-wrap:anywhere; font-size:13px}
+.policy-check input{width:20px; height:20px; flex-shrink:0; accent-color:var(--accent)}
+.policy-actions{margin:8px 0 12px}
+.policy-allow{
+  margin:4px 0 12px;
+  padding:10px 12px;
+  background:rgba(0,0,0,0.5);
+  border:1px solid var(--border);
+  color:#7ee787;
+  font-size:12px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.probe-frame{width:100%; height:56px; border:1px dashed var(--border); background:var(--card)}
+.policy-summary{color:var(--text); min-height:1.5em}
+#policyTableWrap tr.changed td{background:rgba(255,215,0,0.06)}
+.probe-body{margin:0; padding:8px 12px; background:var(--card); color:var(--muted); font-family:sans-serif; font-size:13px}
+.probe-text{margin:4px 0}
+@media (max-width: 560px){
+  #policyTableWrap table,
+  #policyTableWrap tbody,
+  #policyTableWrap tr,
+  #policyTableWrap td{display:block; width:100%}
+  #policyTableWrap thead{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0)}
+  #policyTableWrap tr{border-bottom:1px solid var(--border); padding:8px 0}
+  #policyTableWrap td{border:0; padding:4px; display:grid; grid-template-columns:6.5em minmax(0, 1fr); gap:8px; align-items:center}
+  #policyTableWrap td::before{content:attr(data-label); color:var(--muted); font-size:12px}
+  #policyTableWrap td > *{justify-self:start}
+}

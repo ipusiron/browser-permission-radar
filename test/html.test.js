@@ -101,3 +101,8 @@ test('表記: 「ブラウザ」「リポジトリ」は長音つき、カテゴ
   assert.ok(!/ブラウザ(?!ー)/.test(html));
   assert.ok(!/リポジトリ(?!ー)/.test(html));
 });
+
+test('絞り込みのボタンは data-filter で選ぶ（埋め込みタブの .chip を巻き込まない）', () => {
+  assert.ok(script.includes("document.querySelectorAll('.chip[data-filter]')"));
+  assert.ok(!script.includes("document.querySelectorAll('.chip')"));
+});

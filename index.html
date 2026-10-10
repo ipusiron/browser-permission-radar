@@ -29,6 +29,7 @@
     <div class="tabs" role="tablist" aria-label="表示の切り替え">
       <button type="button" id="tab-radar" data-tab="radar" class="tab active" role="tab" aria-selected="true" aria-controls="radar">レーダー</button>
       <button type="button" id="tab-details" data-tab="details" class="tab" role="tab" aria-selected="false" aria-controls="details" tabindex="-1">詳細</button>
+      <button type="button" id="tab-policy" data-tab="policy" class="tab" role="tab" aria-selected="false" aria-controls="policy" tabindex="-1">埋め込み</button>
       <button type="button" id="tab-learn" data-tab="learn" class="tab" role="tab" aria-selected="false" aria-controls="learn" tabindex="-1">座学</button>
     </div>
 
@@ -187,6 +188,35 @@
         </div>
         <p class="muted">照会できない権限は<code>unknown</code>、機能のAPIがないものは<code>unsupported</code>と表示します。「出所」は、状態をどこから読んだかです。</p>
         <div id="permTableWrap" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- Permissions Policy の実験 -->
+    <section id="policy" class="panel" role="tabpanel" aria-labelledby="tab-policy" hidden>
+      <div class="card">
+        <h3>埋め込み（iframe）の実験：Permissions Policy</h3>
+        <p class="muted">
+          このツールの照会用のページ（probe.html）を、下のallow属性でiframeに入れて照会し、このページの結果と並べます。
+          チェックを外した機能は<code>'none'</code>（止める）として渡します。同じオリジンの埋め込みなので、違いはPermissions Policyだけから生まれます。
+        </p>
+        <fieldset class="policy-features">
+          <legend>iframeに許す機能（allow属性）</legend>
+          <div id="policyChecks" class="policy-checks"></div>
+        </fieldset>
+        <div class="row policy-actions">
+          <button type="button" id="policyAll" class="chip">すべて許す</button>
+          <button type="button" id="policyNone" class="chip">すべて止める</button>
+          <button type="button" id="policyRun" class="rescan-btn">▶ このallowで埋め込んで照会</button>
+        </div>
+        <p class="muted small">iframeのallow属性</p>
+        <pre id="policyAllow" class="policy-allow"></pre>
+        <div id="policyFrameWrap" class="policy-frame"></div>
+        <p id="policySummary" class="policy-summary" role="status" aria-live="polite"></p>
+        <div id="policyTableWrap" class="table-wrap"></div>
+        <p class="muted tiny">
+          参考（2026-10-10、Edgeの実測）：別のサイトのiframeにallowなしで入れると、camera・microphone・geolocation・midi・clipboard-read・clipboard-write・idle-detectionがdeniedになり、
+          notifications・pushはallowを付けてもdeniedでした。
+        </p>
       </div>
     </section>
 

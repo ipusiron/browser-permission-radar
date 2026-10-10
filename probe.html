@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Browser Permission Radar - 埋め込みの実験用のページ</title>
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="probe-body">
+  <p class="probe-text">埋め込みの実験用のページ（照会した権限: <span id="probeStatus">-</span>）</p>
+  <p id="probeAlone" class="notice" hidden>
+    このページは、Browser Permission Radarの「埋め込み」タブがiframeに入れて使う照会用のページです。
+    <a href="./">Browser Permission Radarを開く</a>
+  </p>
+  <script type="module" src="js/probe.js"></script>
+</body>
+</html>

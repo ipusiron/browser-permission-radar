@@ -266,17 +266,21 @@ browser-permission-radar/
 ├── script.js                     # 画面の処理（照会の表示・権限テスト・ライブ更新）
 ├── style.css                     # スタイル（ダークテーマ・狭い画面の縦積み）
 ├── sw.js                         # Background Syncを試すときだけ登録するService Worker（通信しない）
+├── probe.html                    # 埋め込みの実験でiframeに入れる照会用のページ
 ├── js/                           # 画面から読むモジュール
 │   ├── perm-core.js              # 権限の定義・状態の分類・スコア（DOMに依存しない）
 │   ├── scanner.js                # 照会と分類（ブラウザーのAPIは引数で受け取る）
 │   ├── radar-geom.js             # レーダーの座標とラベルの配置
 │   ├── radar-svg.js              # レーダーをSVGで描く
+│   ├── policy-core.js            # 埋め込みの実験（allow属性の組み立て・結果の検証と比較）
+│   ├── probe.js                  # 照会用のページの処理（結果を同じオリジンの親へ送る）
 │   ├── messages.js               # 画面とログの文言
 │   └── i18n.js                   # 文言の取り出し
 ├── test/                         # 自動テスト（node --test）
 │   ├── perm-core.test.js         # 分類・スコア
 │   ├── scanner.test.js           # 照会（偽のブラウザー）
 │   ├── radar-geom.test.js        # レーダーの座標・ラベルの重なり
+│   ├── policy-core.test.js       # 埋め込みの実験の計算部
 │   ├── messages.test.js          # 文言の辞書
 │   ├── html.test.js              # index.htmlの静的な検査
 │   ├── contrast.test.js          # 配色のコントラスト

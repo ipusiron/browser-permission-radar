@@ -12,6 +12,7 @@
 import { GROUPS, GROUP_ORDER, summarize, formatScore } from './js/perm-core.js';
 import { scanAll, diffResults } from './js/scanner.js';
 import { renderRadar } from './js/radar-svg.js';
+import { POLICY_FEATURES, buildAllow, parseProbeMessage, compareResults, summarizeComparison } from './js/policy-core.js';
 import { t } from './js/i18n.js';
 
 (() => {
@@ -88,7 +89,7 @@ import { t } from './js/i18n.js';
   const rescanBtn = document.getElementById('rescanBtn');
 
   // カテゴリフィルターチップ
-  const chips = document.querySelectorAll('.chip');
+  const chips = document.querySelectorAll('.chip[data-filter]');  // 絞り込みのボタンだけ（埋め込みタブの .chip は含めない）
 
   // ========================================
   // Tooltip System
@@ -611,6 +612,117 @@ import { t } from './js/i18n.js';
     return run.promise;
   }
 
+
+  // ========================================
+  // Permissions Policy の実験（埋め込みタブ）
+  // ========================================
+  // 照会用のページ（probe.html）を同じオリジンの iframe に入れ、allow 属性で機能を止めて照会させる。
+  // 届いた結果は、送り元（この iframe）・オリジン・形を確かめてから表にする
+  const policyChecks = document.getElementById('policyChecks');
+  const policyAllowEl = document.getElementById('policyAllow');
+  const policyFrameWrap = document.getElementById('policyFrameWrap');
+  const policySummary = document.getElementById('policySummary');
+  const policyTableWrap = document.getElementById('policyTableWrap');
+  const POLICY_TIMEOUT_MS = 8000;
+  let policyFrame = null;
+  let policyTimer = null;
+  let policyLast = null;  // 直近の結果（言語の切り替えで描き直す）
+
+  for (const [key, feature] of Object.entries(POLICY_FEATURES)) {
+    const label = document.createElement('label');
+    label.className = 'policy-check';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.value = key;
+    box.checked = true;
+    const text = document.createElement('span');
+    text.textContent = key === feature ? key : `${key}（${feature}）`;
+    label.append(box, text);
+    policyChecks.appendChild(label);
+  }
+
+  function allowedKeys() {
+    return [...policyChecks.querySelectorAll('input[type=checkbox]')].filter(b => b.checked).map(b => b.value);
+  }
+
+  function updateAllowText() {
+    policyAllowEl.textContent = buildAllow(allowedKeys());
+  }
+
+  policyChecks.addEventListener('change', updateAllowText);
+  document.getElementById('policyAll').addEventListener('click', () => {
+    policyChecks.querySelectorAll('input').forEach(b => { b.checked = true; });
+    updateAllowText();
+  });
+  document.getElementById('policyNone').addEventListener('click', () => {
+    policyChecks.querySelectorAll('input').forEach(b => { b.checked = false; });
+    updateAllowText();
+  });
+  updateAllowText();
+
+  function renderPolicyTable(rows) {
+    const table = document.createElement('table');
+    const hr = table.createTHead().insertRow();
+    const heads = ['table.permission', 'table.allow', 'table.top', 'table.frame'].map(k => t(k));
+    for (const h of heads) {
+      const th = document.createElement('th');
+      th.scope = 'col';
+      th.textContent = h;
+      hr.appendChild(th);
+    }
+    const tbody = table.createTBody();
+    for (const r of rows) {
+      const tr = tbody.insertRow();
+      if (r.changed) tr.className = 'changed';
+      const c1 = tr.insertCell();
+      const code = document.createElement('code');
+      code.textContent = r.key;
+      c1.appendChild(code);
+      const c2 = tr.insertCell();
+      c2.className = 'muted';
+      c2.textContent = r.allowed === null ? t('policy.notPolicy') : r.allowed ? t('policy.allowed') : t('policy.blocked');
+      tr.insertCell().appendChild(badgeEl(r.top));
+      tr.insertCell().appendChild(badgeEl(r.frame));
+      [...tr.cells].forEach((cell, i) => { cell.dataset.label = heads[i]; });
+    }
+    policyTableWrap.replaceChildren(table);
+  }
+
+  function showPolicyResult() {
+    if (!policyLast) return;
+    const rows = compareResults(lastResults, policyLast.framed, policyLast.allowed);
+    const sum = summarizeComparison(rows);
+    policySummary.textContent = sum.blocked
+      ? t('policy.summary', { changed: sum.changed, blocked: sum.blocked, measured: sum.blockedMeasured, denied: sum.blockedDenied })
+      : t('policy.summaryNoBlock', { changed: sum.changed });
+    renderPolicyTable(rows);
+  }
+
+  window.addEventListener('message', ev => {
+    if (!policyFrame || ev.source !== policyFrame.contentWindow || ev.origin !== window.location.origin) return;
+    const framed = parseProbeMessage(ev.data);
+    if (!framed) return;
+    clearTimeout(policyTimer);
+    policyLast = { framed, allowed: allowedKeys() };
+    showPolicyResult();
+  });
+
+  document.getElementById('policyRun').addEventListener('click', () => {
+    clearTimeout(policyTimer);
+    policyLast = null;
+    policyTableWrap.replaceChildren();
+    policySummary.textContent = t('policy.running');
+    if (policyFrame) policyFrame.remove();
+    policyFrame = document.createElement('iframe');
+    policyFrame.className = 'probe-frame';
+    policyFrame.title = t('policy.frameTitle');
+    policyFrame.setAttribute('allow', buildAllow(allowedKeys()));
+    policyFrame.src = 'probe.html';
+    policyFrameWrap.replaceChildren(policyFrame);
+    policyTimer = setTimeout(() => {
+      policySummary.textContent = t('policy.timeout', { sec: POLICY_TIMEOUT_MS / 1000 });
+    }, POLICY_TIMEOUT_MS);
+  });
 
   // ========================================
   // Accordion Functionality (Learn Tab)
