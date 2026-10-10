@@ -3,22 +3,27 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PERMISSIONS, SCORE_TABLE, classify, summarize, formatScore } from '../js/perm-core.js';
+import { PERMISSIONS, GROUPS, SCORE_TABLE, classify, summarize, formatScore } from '../js/perm-core.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
 const fx = JSON.parse(readFileSync(join(ROOT, 'test/fixtures/measured-20261010.json'), 'utf8'));
 
 /** 実測の記録（照会の生の結果）を、画面と同じ分類・スコアにかける */
-const FEATURE_GLOBAL = { syncManager: 'SyncManager', paymentManager: 'PaymentManager', idleDetector: 'IdleDetector' };
+const FEATURE_GLOBAL = {
+  syncManager: 'SyncManager', paymentManager: 'PaymentManager', idleDetector: 'IdleDetector',
+  localFonts: 'queryLocalFonts', windowManagement: 'getScreenDetails', sensors: 'Accelerometer',
+};
+// 機能の API を調べる手段のない権限（local-network）は、照会できなければ unsupported
+const NO_FEATURE_API = new Set(['localNetwork']);
 function scoresOf(name) {
   const raw = fx[name];
   const absent = fx.features_absent[name] || [];
-  const results = PERMISSIONS.map(p => {
+  const results = PERMISSIONS.filter(p => p.key in raw).map(p => {
     const q = raw[p.key];
     const { state } = classify({
       queryState: q.startsWith('ERR') ? null : q,
-      featurePresent: !absent.includes(FEATURE_GLOBAL[p.feature]),
+      featurePresent: !NO_FEATURE_API.has(p.feature) && !absent.includes(FEATURE_GLOBAL[p.feature]),
       notificationPermission: p.key === 'notifications' ? raw.__notification : null,
     });
     return { key: p.key, state };
@@ -96,7 +101,8 @@ test('スコアの表は perm-core と同じ値', () => {
 
 test('ユースケースの数値は、実測の記録から計算し直した値と一致する', () => {
   const edge = scoresOf('edge');
-  assert.deepEqual(edge.results.filter(r => r.state === 'granted').map(r => r.key),
+  const first12 = r => !GROUPS.extra.includes(r.key);
+  assert.deepEqual(edge.results.filter(r => first12(r) && r.state === 'granted').map(r => r.key),
     ['clipboard-write', 'background-sync', 'payment-handler']);
   assert.ok(readme.includes(`データ系のスコアは${edge.fmt('data')}、通信・通知系は${edge.fmt('comm')}でした`));
   const ff = scoresOf('firefox');

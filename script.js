@@ -9,7 +9,7 @@
  * @author ipusiron
  * @license MIT
  */
-import { GROUPS, summarize, formatScore } from './js/perm-core.js';
+import { GROUPS, GROUP_ORDER, summarize, formatScore } from './js/perm-core.js';
 import { scanAll, diffResults } from './js/scanner.js';
 import { renderRadar } from './js/radar-svg.js';
 import { t } from './js/i18n.js';
@@ -64,33 +64,21 @@ import { t } from './js/i18n.js';
   // DOM Elements
   // ========================================
 
+  // カテゴリ → 要素（id は radar{Group}・score-{group}・scoreLink-{group}・measured-{group}）
+  const byGroup = prefix => Object.fromEntries(GROUP_ORDER.map(g => [g, document.getElementById(prefix(g))]));
+  const cap = g => g[0].toUpperCase() + g.slice(1);
+
   // レーダーの SVG 要素
-  const radarSvgs = {
-    device: document.getElementById('radarDevice'),
-    data:   document.getElementById('radarData'),
-    comm:   document.getElementById('radarComm'),
-  };
+  const radarSvgs = byGroup(g => `radar${cap(g)}`);
 
   // スコア表示要素
-  const scoreEls = {
-    device: document.getElementById('score-device'),
-    data:   document.getElementById('score-data'),
-    comm:   document.getElementById('score-comm'),
-  };
+  const scoreEls = byGroup(g => `score-${g}`);
 
-  // スコアリンクボタン（クリックでDetailsタブへフィルタリング）
-  const scoreLinks = {
-    device: document.getElementById('scoreLink-device'),
-    data:   document.getElementById('scoreLink-data'),
-    comm:   document.getElementById('scoreLink-comm'),
-  };
+  // スコアリンクボタン（クリックで詳細タブをそのカテゴリに絞る）
+  const scoreLinks = byGroup(g => `scoreLink-${g}`);
 
   // スコアの計算に使えた件数（照会できない権限は数えない）
-  const measuredEls = {
-    device: document.getElementById('measured-device'),
-    data:   document.getElementById('measured-data'),
-    comm:   document.getElementById('measured-comm'),
-  };
+  const measuredEls = byGroup(g => `measured-${g}`);
 
   // 詳細テーブルとログ
   const permTableWrap = document.getElementById('permTableWrap');
@@ -498,6 +486,22 @@ import { t } from './js/i18n.js';
       const state = await window.IdleDetector.requestPermission();
       log(t('log.idle.ok', { state }));
     },
+    askWakeLock: async () => {
+      if (!(navigator.wakeLock && navigator.wakeLock.request)) return log(t('log.unsupported', { name: t('test.wakelock') }));
+      const sentinel = await navigator.wakeLock.request('screen');
+      await sentinel.release();
+      log(t('log.wakelock.ok'));
+    },
+    askFonts: async () => {
+      if (typeof window.queryLocalFonts !== 'function') return log(t('log.unsupported', { name: t('test.fonts') }));
+      const fonts = await window.queryLocalFonts();
+      log(t('log.fonts.ok', { n: fonts.length }));  // 名前は表示しない
+    },
+    askScreens: async () => {
+      if (typeof window.getScreenDetails !== 'function') return log(t('log.unsupported', { name: t('test.screens') }));
+      const details = await window.getScreenDetails();
+      log(t('log.screens.ok', { n: details.screens.length }));  // 解像度・配置は表示しない
+    },
     testBgSync: async () => {
       if (!('serviceWorker' in navigator)) return log(t('log.unsupported', { name: t('test.sync') }));
       if (!('SyncManager' in window)) return log(t('log.sync.nosync'));
@@ -525,7 +529,8 @@ import { t } from './js/i18n.js';
   const TEST_NAMES = {
     askNotif: 'test.notifications', getGeo: 'test.geolocation', getCamera: 'test.camera', getMic: 'test.microphone',
     readClip: 'test.clipread', writeClip: 'test.clipwrite', getMIDI: 'test.midi', askPersist: 'test.persist',
-    askIdle: 'test.idle', testBgSync: 'test.sync', cleanupSW: 'test.cleanup',
+    askIdle: 'test.idle', askWakeLock: 'test.wakelock', askFonts: 'test.fonts', askScreens: 'test.screens',
+    testBgSync: 'test.sync', cleanupSW: 'test.cleanup',
   };
 
   for (const [id, run] of Object.entries(QUICK_TESTS)) {
@@ -579,9 +584,7 @@ import { t } from './js/i18n.js';
     for (const c of changes) log(t(fromChange ? 'log.change' : 'log.diff', c));
     if (!quiet) log(t('log.rescan', { n: results.length }));
     lastResults = results.slice();
-    drawRadarGroup('device', results);
-    drawRadarGroup('data', results);
-    drawRadarGroup('comm', results);
+    for (const g of GROUP_ORDER) drawRadarGroup(g, results);
     renderTable(results);
     watch(results);
     return results;

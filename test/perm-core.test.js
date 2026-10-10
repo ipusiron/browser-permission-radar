@@ -6,10 +6,12 @@ import {
   stateToScore, groupScore, formatScore, countStates, summarize, findPermission,
 } from '../js/perm-core.js';
 
-test('12権限が3カテゴリに4つずつ、重複なく入っている', () => {
-  assert.equal(PERMISSIONS.length, 12);
-  assert.deepEqual(GROUP_ORDER, ['device', 'data', 'comm']);
-  for (const g of GROUP_ORDER) assert.equal(GROUPS[g].length, 4);
+test('18権限が4カテゴリ（4・4・4・6）に、重複なく入っている', () => {
+  assert.equal(PERMISSIONS.length, 18);
+  assert.deepEqual(GROUP_ORDER, ['device', 'data', 'comm', 'extra']);
+  for (const g of ['device', 'data', 'comm']) assert.equal(GROUPS[g].length, 4);
+  assert.deepEqual(GROUPS.extra, ['local-network', 'storage-access', 'screen-wake-lock', 'window-management', 'local-fonts',
+    'accelerometer']);
   const keys = PERMISSIONS.map(p => p.key);
   assert.equal(new Set(keys).size, keys.length);
   assert.deepEqual(GROUPS.device, ['geolocation', 'camera', 'microphone', 'midi']);
@@ -17,8 +19,9 @@ test('12権限が3カテゴリに4つずつ、重複なく入っている', () =
   assert.deepEqual(GROUPS.comm, ['notifications', 'push', 'payment-handler', 'idle-detection']);
 });
 
-test('push の照会には userVisibleOnly: true を付ける', () => {
+test('push の照会には userVisibleOnly: true を付ける。local-network は旧名でも照会する', () => {
   assert.deepEqual(findPermission('push').descriptor, { name: 'push', userVisibleOnly: true });
+  assert.deepEqual(findPermission('local-network').descriptors.map(d => d.name), ['local-network', 'local-network-access']);
   for (const p of PERMISSIONS) assert.equal(p.descriptor.name, p.key);
   assert.equal(findPermission('nope'), null);
 });

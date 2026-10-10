@@ -91,11 +91,13 @@ test('画面が使う id がそろっている', () => {
   const ids = ['radarDevice', 'radarData', 'radarComm', 'score-device', 'score-data', 'score-comm', 'measured-device',
     'measured-data', 'measured-comm', 'scoreLink-device', 'scoreLink-data', 'scoreLink-comm', 'permTableWrap', 'log',
     'rescanBtn', 'askNotif', 'getGeo', 'getCamera', 'getMic', 'readClip', 'writeClip', 'getMIDI', 'askPersist',
-    'askIdle', 'testBgSync', 'cleanupSW', 'radar-status-device', 'radar-status-data', 'radar-status-comm'];
+    'askIdle', 'askWakeLock', 'askFonts', 'askScreens', 'testBgSync', 'cleanupSW', 'radar-status-device', 'radar-status-data',
+    'radar-status-comm', 'radarExtra', 'score-extra', 'measured-extra', 'scoreLink-extra', 'radar-status-extra'];
   for (const id of ids) assert.equal([...html.matchAll(new RegExp(`id="${id}"`, 'g'))].length, 1, id);
 });
 
-test('表記: 「ブラウザ」「リポジトリ」は長音つき', () => {
+test('表記: 「ブラウザ」「リポジトリ」は長音つき、カテゴリ名は「通信・通知系」', () => {
+  assert.ok(!html.includes('通知・通信系'));
   assert.ok(!/ブラウザ(?!ー)/.test(html));
   assert.ok(!/リポジトリ(?!ー)/.test(html));
 });

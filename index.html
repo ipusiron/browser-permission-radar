@@ -75,7 +75,7 @@
 
         <div class="card">
           <h3 class="group-title">
-            通知・通信系
+            通信・通知系
             <button type="button" class="help-icon" data-tooltip="プッシュ通知、決済処理、アイドル検知など、&#10;ユーザーへの通信・通知機能に関する権限です。&#10;&#10;リスク: スパム・フィッシング誘導・&#10;不正決済・行動監視" aria-label="説明">?</button>
             <button type="button" id="scoreLink-comm" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-comm">-</span></button>
           </h3>
@@ -83,6 +83,19 @@
           <p class="muted tiny score-measured" id="measured-comm"></p>
           <svg id="radarComm" class="radar" viewBox="0 0 400 400" role="group" aria-label="通信・通知系のレーダー"></svg>
           <div role="status" aria-live="polite" id="radar-status-comm" class="sr-only"></div>
+          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
+        </div>
+        <div class="card">
+          <h3 class="group-title">
+            画面・ネットワーク・センサー系
+            <button type="button" class="help-icon" aria-label="説明"
+              data-tooltip="LANの中の機器への通信、埋め込みでのCookie、画面のロック止め、画面の配置、フォントの一覧、センサーなど、比較的新しい権限です。&#10;Chromium系で照会できるものが多く、Firefox・Safariでは照会できないものがあります。&#10;&#10;リスク: LANの探索・サイトをまたいだ追跡・ブラウザーを見分ける材料">?</button>
+            <button type="button" id="scoreLink-extra" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-extra">-</span></button>
+          </h3>
+          <p class="muted small">local-network / storage-access / screen-wake-lock / window-management / local-fonts / accelerometer</p>
+          <p class="muted tiny score-measured" id="measured-extra"></p>
+          <svg id="radarExtra" class="radar" viewBox="0 0 400 400" role="group" aria-label="画面・ネットワーク・センサー系のレーダー"></svg>
+          <div role="status" aria-live="polite" id="radar-status-extra" class="sr-only"></div>
           <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
       </div>
@@ -132,6 +145,18 @@
             <span class="test-desc">アイドル検出の許可をリクエスト</span>
           </div>
           <div class="test-item">
+            <button type="button" id="askWakeLock" class="test-btn">💡 Screen Wake Lock</button>
+            <span class="test-desc">画面のロック止めを取得して、すぐに解放</span>
+          </div>
+          <div class="test-item">
+            <button type="button" id="askFonts" class="test-btn">🔤 Local Fonts</button>
+            <span class="test-desc">フォントの一覧の読み取りをリクエスト（件数だけ表示）</span>
+          </div>
+          <div class="test-item">
+            <button type="button" id="askScreens" class="test-btn">🖥️ Window Management</button>
+            <span class="test-desc">画面の配置の読み取りをリクエスト（台数だけ表示）</span>
+          </div>
+          <div class="test-item">
             <button type="button" id="testBgSync" class="test-btn">🔄 Background Sync</button>
             <span class="test-desc">押したときだけService Worker（sw.js、通信しない）を登録し、同期を登録</span>
           </div>
@@ -157,6 +182,7 @@
             <button type="button" class="chip" data-filter="device">Device</button>
             <button type="button" class="chip" data-filter="data">Data</button>
             <button type="button" class="chip" data-filter="comm">Comm</button>
+            <button type="button" class="chip" data-filter="extra">Extra</button>
           </div>
         </div>
         <p class="muted">照会できない権限は<code>unknown</code>、機能のAPIがないものは<code>unsupported</code>と表示します。「出所」は、状態をどこから読んだかです。</p>
@@ -231,6 +257,15 @@
               <li>push：ページを閉じていても届く。通知の許可と組み合わせて使われる</li>
               <li>payment-handler：Webの決済アプリ。偽の決済画面の土台になりうる</li>
               <li>idle-detection：操作していない・画面がロックされた、を検知する。在席・離席の監視</li>
+            </ul>
+
+            <h3>🟠 画面・ネットワーク・センサー系</h3>
+            <ul>
+              <li>local-network：公開されたサイトから、LANの中の機器（ルーター・プリンター・NAS）やこのPC（localhost）への通信。Chromium系では、この通信の前に許可を求める仕組み（Local Network Access）が入っている</li>
+              <li>storage-access：埋め込まれたページが、自分のCookie（サードパーティーCookie）を使う許可。サイトをまたいだ追跡に関わる</li>
+              <li>screen-wake-lock：画面が暗くなるのを止める。EdgeとFirefoxでは開いた直後から許可されていた</li>
+              <li>window-management・local-fonts：画面の構成やフォントの一覧は、ブラウザーを見分ける強い材料になる</li>
+              <li>accelerometer：センサー。Chromium系では既定で許可されている</li>
             </ul>
           </div>
         </div>
