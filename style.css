@@ -28,8 +28,9 @@
   /* 権限ステータスカラー */
   --granted: #00ff88;      /* 許可済み（緑） */
   --prompt: #ffd700;       /* 未決定（黄） */
-  --denied: #ff3366;       /* 拒否済み（赤） */
-  --unsupported: #6b7280;  /* 未対応（グレー） */
+  --denied: #ff5c85;       /* 拒否済み（赤）。淡い赤の下地で 4.5:1 以上 */
+  --unsupported: #94a3b8;  /* 機能なし（グレー）。カードの上で 4.5:1 以上 */
+  --unknown: #b48cff;      /* 照会できない（紫） */
 
   /* ハイライト */
   --highlight: rgba(0, 240, 255, 0.2);
@@ -47,7 +48,6 @@
     --text: #e6eef8;
     --muted: #a0a8b8;
     --border: #1f2937;
-    --unsupported: #64748b;
     --highlight: #2a2a19;
   }
 }
@@ -56,7 +56,7 @@
    Base Styles
    ======================================== */
 *{box-sizing:border-box; word-wrap:break-word}
-html,body{margin:0;padding:0;overflow-x:hidden;width:100%}
+html,body{margin:0;padding:0;width:100%}
 body{
   font-family:"Courier New",Consolas,Monaco,monospace;
   background:var(--bg);
@@ -74,6 +74,7 @@ body{
   text-align:center;
   box-shadow:0 0 20px var(--accent-glow);
   position:relative;
+  overflow:hidden;  /* 走査線（::before）が画面の右へはみ出して横スクロールを作らないように */
   width:100%;
   max-width:100%;
 }
@@ -97,6 +98,7 @@ body{
 .container{max-width:1200px; width:100%; margin:20px auto; padding:0 16px}
 .tabs{display:flex; gap:8px; margin-bottom:12px; justify-content:center}
 .tab{
+  min-height:44px;
   padding:10px 20px;
   border-radius:0;
   border:2px solid var(--border);
@@ -139,12 +141,31 @@ body{
   box-shadow:0 2px 8px rgba(0,0,0,0.2);
 }
 
-.panel{display:none; width:100%; max-width:100%}
-.panel.visible{display:block}
+.panel{width:100%; max-width:100%}
 
-.grid-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:20px; width:100%; max-width:100%}
-@media (max-width: 1200px){ .grid-3{grid-template-columns:1fr} }
-@media (max-width: 860px){ .grid-3{grid-template-columns:1fr} }
+/* 埋め込み・JavaScript 無効の案内 */
+.notice{
+  margin:0 0 16px;
+  padding:12px 16px;
+  border:1px solid var(--prompt);
+  border-left:4px solid var(--prompt);
+  background:rgba(255,215,0,0.08);
+  color:var(--text);
+  font-family:sans-serif;
+  font-size:14px;
+  line-height:1.6;
+}
+.lead-note{margin:0 0 20px}
+.closing-note{margin:24px 0 0}
+
+.grid-3{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap:20px;
+  margin-bottom:20px;
+  width:100%;
+  max-width:100%;
+}
 
 .card{
   background:var(--card);
@@ -157,21 +178,63 @@ body{
   max-width:100%;
   overflow:visible;
 }
-canvas{
+/* レーダー（SVG）。viewBox は 400×400。拡大してもぼやけない */
+.radar{
   display:block;
-  margin:16px auto;
-  max-width:100%;
+  margin:12px auto;
   width:100%;
+  max-width:420px;
   height:auto;
+  overflow:visible;
 }
-.row{display:flex; gap:12px; align-items:center}
+.radar .ring{fill:none; stroke:var(--accent); stroke-opacity:0.3; stroke-width:1}
+.radar .axis{stroke:var(--accent); stroke-opacity:0.4; stroke-width:1}
+.radar .area{
+  fill:rgba(0,240,255,0.18);
+  stroke:#00f0ff;
+  stroke-width:2;
+  stroke-linejoin:round;
+  filter:drop-shadow(0 0 6px rgba(0,240,255,0.7));
+}
+.radar .label-leader{stroke:var(--accent); stroke-opacity:0.45; stroke-width:1}
+.radar .label-box{fill:rgba(6,14,28,0.98); stroke:rgba(0,240,255,0.6); stroke-width:1}
+.radar .label-text{fill:var(--accent); font:600 15px "Courier New",Consolas,monospace}
+.radar .label.state-unknown .label-box{stroke:var(--unknown); stroke-dasharray:4 3}
+.radar .label.state-unknown .label-text{fill:var(--unknown)}
+.radar .label.state-unsupported{opacity:0.55}
+.radar .pt{cursor:pointer; outline:none}
+.radar .pt-hit{fill:transparent}
+.radar .pt-focus{fill:none; stroke:transparent; stroke-width:2.5}
+.radar .pt:focus-visible .pt-focus{stroke:#ffffff}
+.radar .pt-dot{fill:currentColor; stroke:#000000; stroke-width:1; filter:drop-shadow(0 0 4px currentColor)}
+.radar .pt:hover .pt-dot{stroke:#ffffff}
+.radar .state-granted{color:var(--granted)}
+.radar .state-prompt{color:var(--prompt)}
+.radar .state-denied{color:var(--denied)}
+.radar .state-unsupported{color:var(--unsupported)}
+.radar .state-unknown{color:var(--unknown)}
+.radar .state-unknown .pt-dot{fill:var(--card); stroke:var(--unknown); stroke-width:2; stroke-dasharray:3 2}
+.row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
 .space-between{justify-content:space-between}
-.legend{display:flex; gap:14px; align-items:center; color:var(--text); font-size:12px; text-transform:uppercase; letter-spacing:1px; font-weight:500}
-.legend-dot{display:inline-block; width:12px; height:12px; border-radius:2px; transform:rotate(45deg)}
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px 14px;
+  align-items:center;
+  color:var(--text);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  font-weight:500;
+}
+.legend-item{display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
+.legend-dot{display:inline-block; flex-shrink:0; width:12px; height:12px; border-radius:2px; transform:rotate(45deg)}
 .legend-dot.granted{background:var(--granted); box-shadow:0 0 6px var(--granted)}
 .legend-dot.prompt{background:var(--prompt); box-shadow:0 0 6px var(--prompt)}
 .legend-dot.denied{background:var(--denied); box-shadow:0 0 6px var(--denied)}
 .legend-dot.unsupported{background:var(--unsupported); box-shadow:0 0 4px var(--unsupported)}
+.legend-dot.unknown{background:var(--unknown); box-shadow:0 0 4px var(--unknown)}
 
 button{
   padding:10px 16px;
@@ -195,7 +258,7 @@ button::before{
   left:50%;
   width:0;
   height:0;
-  background:var(--accent-glow);
+  background:rgba(0,240,255,0.12);  /* 濃くすると hover 中の水色の文字が読めなくなる */
   transform:translate(-50%, -50%);
   transition:width 0.3s, height 0.3s;
   border-radius:50%;
@@ -207,8 +270,12 @@ button:hover{
   border-color:var(--neon-cyan);
 }
 button:disabled{opacity:.4; cursor:not-allowed}
+button:focus-visible,
+a:focus-visible,
+.chip:focus-visible{outline:3px solid #ffffff; outline-offset:2px}
 
 .score-link{
+  min-height:44px;
   font-weight:700;
   border:2px solid var(--accent);
   background:rgba(0,240,255,0.15);
@@ -227,6 +294,7 @@ button:disabled{opacity:.4; cursor:not-allowed}
   box-shadow:0 0 25px var(--accent-glow);
   transform:scale(1.05);
 }
+.score-link:hover span{color:#000; text-shadow:none}
 .score-link span{
   font-size:16px;
   font-weight:900;
@@ -236,6 +304,7 @@ button:disabled{opacity:.4; cursor:not-allowed}
 }
 
 .rescan-btn{
+  min-height:44px;
   background:transparent;
   color:var(--neon-cyan);
   border:2px solid var(--accent);
@@ -275,6 +344,7 @@ button:disabled{opacity:.4; cursor:not-allowed}
 @media (max-width: 860px){ .test-grid{grid-template-columns:1fr} }
 .test-item{display:flex; flex-direction:column; gap:6px; max-width:100%}
 .test-btn{
+  min-height:44px;
   width:100%;
   text-align:left;
   font-size:13px;
@@ -308,6 +378,8 @@ button:disabled{opacity:.4; cursor:not-allowed}
   font-family:"Courier New",monospace;
   box-shadow:inset 0 2px 8px rgba(0,0,0,0.4);
   line-height:1.6;
+  white-space:pre-wrap;  /* 1件ごとの改行を表示する */
+  overflow-wrap:anywhere;
 }
 
 .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border-width:0}
@@ -315,6 +387,27 @@ button:disabled{opacity:.4; cursor:not-allowed}
 .small{font-size:13px}
 .tiny{font-size:12px}
 .table-wrap{overflow-x:auto; width:100%; max-width:100%; position:relative}
+/* 狭い画面では表を1行ずつの縦積みにし、列の見出しを各セルの左に出す */
+@media (max-width: 560px){
+  #permTableWrap table,
+  #permTableWrap tbody,
+  #permTableWrap tr,
+  #permTableWrap td{display:block; width:100%}
+  #permTableWrap thead{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0)}
+  #permTableWrap tr{border-bottom:1px solid var(--border); padding:8px 0}
+  #permTableWrap td{
+    border:0;
+    padding:4px 4px;
+    display:grid;
+    grid-template-columns:5.5em minmax(0, 1fr);
+    gap:8px;
+    align-items:center;
+    overflow-wrap:anywhere;
+  }
+  #permTableWrap td::before{content:attr(data-label); color:var(--muted); font-size:12px; letter-spacing:0}
+  #permTableWrap td > *{justify-self:start}
+}
+.perm-name{display:inline-flex; align-items:center; flex-wrap:wrap}
 table{width:100%; border-collapse:collapse; margin-top:10px; max-width:100%; position:relative}
 th,td{
   border-bottom:1px solid var(--border);
@@ -333,6 +426,8 @@ th{
 td{
   color:var(--text);
 }
+/* 権限名のリンク（行をハイライトする）。押せる範囲を 44px にする */
+#permTableWrap td a{display:inline-flex; align-items:center; min-height:44px; vertical-align:middle}
 td code{
   background:rgba(0,240,255,0.1);
   padding:4px 8px;
@@ -360,8 +455,15 @@ td code{
 .status-prompt{background:rgba(255,215,0,0.15); color:var(--prompt); border-color:var(--prompt)}
 .status-denied{background:rgba(255,51,102,0.15); color:var(--denied); border-color:var(--denied)}
 .status-unsupported{background:rgba(107,114,128,0.15); color:var(--unsupported); border-color:var(--unsupported)}
+.status-unknown{background:rgba(180,140,255,0.12); color:var(--unknown); border-color:var(--unknown)}
+.mismatch-note{margin-top:4px; color:var(--prompt); font-size:12px}
+.score-measured{margin:-4px 0 0}
+[hidden]{display:none !important}
 
+.filter-row{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
 .chip{
+  min-height:44px;
+  min-width:44px;
   padding:8px 14px;
   border-radius:0;
   border:1px solid var(--accent);
@@ -410,9 +512,14 @@ td code{
   100%{background:transparent; box-shadow:none}
 }
 
-/* Help Icon Tooltip */
+/* Help Icon Tooltip（「?」のボタン。押す・フォーカスで説明を開く） */
 .help-icon,
 .help-icon-small{
+  padding:0;
+  text-transform:none;
+  letter-spacing:0;
+  overflow:visible;
+  flex-shrink:0;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -426,28 +533,33 @@ td code{
   transition:all 0.25s ease;
   z-index:1;
 }
+.help-icon::before,
+.help-icon-small::before{display:none}
 .help-icon{
-  width:18px;
-  height:18px;
-  font-size:11px;
+  width:26px;
+  height:26px;
+  font-size:13px;
 }
 .help-icon-small{
-  width:16px;
-  height:16px;
-  font-size:10px;
+  width:24px;
+  height:24px;
+  font-size:12px;
   margin-left:8px;
   vertical-align:middle;
 }
 .help-icon:hover,
 .help-icon:focus-visible,
 .help-icon-small:hover,
-.help-icon-small:focus-visible{
+.help-icon-small:focus-visible,
+.help-icon[aria-expanded="true"],
+.help-icon-small[aria-expanded="true"]{
   background:rgba(0,240,255,0.4);
   box-shadow:0 0 15px var(--accent-glow);
-  transform:scale(1.1);
-  outline:none;
+  color:var(--neon-cyan);
   z-index:1000;
 }
+.help-icon:focus-visible,
+.help-icon-small:focus-visible{outline:3px solid #ffffff; outline-offset:-3px}
 
 .tooltip-bubble{
   position:fixed;
@@ -470,6 +582,7 @@ td code{
   letter-spacing:0.5px;
   font-family:sans-serif;
   opacity:0;
+  visibility:hidden;
   transform:translateY(-4px);
   transition:opacity 0.15s ease, transform 0.2s ease;
   z-index:10000;
@@ -478,6 +591,7 @@ td code{
 
 .tooltip-bubble.visible{
   opacity:1;
+  visibility:visible;
   transform:translateY(0);
 }
 
@@ -545,14 +659,16 @@ td code{
 .accordion-content{
   max-height:0;
   overflow:hidden;
-  transition:max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  visibility:hidden;  /* 閉じている間は読み上げ・Tab 移動の対象から外す（閉じ終わってから） */
+  transition:max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s 0.4s;
   padding:0 20px;
 }
 
 .accordion-content.active{
-  max-height:2000px;
+  max-height:2400px;
   padding:20px;
-  transition:max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  visibility:visible;
+  transition:max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
 }
 
 .accordion-content ul,
@@ -566,7 +682,7 @@ td code{
   line-height:1.7;
 }
 
-.accordion-content h4{
+.accordion-content h3{
   margin:16px 0 8px 0;
   color:var(--accent);
   font-size:14px;
@@ -597,3 +713,13 @@ td code{
   outline-offset:2px;
 }
 
+/* ========================================
+   Reduced motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce){
+  *,
+  *::before,
+  *::after{animation:none !important; transition:none !important}
+  .topbar::before{display:none}
+  .score-link:hover{transform:none}
+}
