@@ -8,7 +8,7 @@
 /** viewBox の一辺 */
 export const SIZE = 400;
 /** 外周の円の半径 */
-export const RADIUS = 118;
+export const RADIUS = 132;
 /** 同心円の倍率 */
 export const RINGS = [0.25, 0.5, 0.75, 1.0];
 /** 点の半径 */

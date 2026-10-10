@@ -22,6 +22,7 @@ export const MESSAGES = {
     'score.measured': '{total}件中{measured}件で計算',
     'score.none': '照会できた権限がない',
     'radar.status': '{group}のスコアは{score}（{measured}）。{states}',
+    'radar.point': '{key}: {state}（押すと詳細の行へ移ります）',
 
     'perm.geolocation.desc': '現在地の緯度・経度を取得します。',
     'perm.geolocation.risk': '行動の追跡・居場所の特定',

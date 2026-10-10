@@ -29,11 +29,11 @@
     <!-- Global Legend -->
     <div class="global-legend">
       <div class="legend">
-        <span class="legend-dot granted"></span>granted
-        <span class="legend-dot prompt"></span>prompt
-        <span class="legend-dot denied"></span>denied
-        <span class="legend-dot unknown"></span>unknown
-        <span class="legend-dot unsupported"></span>unsupported
+        <span class="legend-item"><span class="legend-dot granted"></span>granted</span>
+        <span class="legend-item"><span class="legend-dot prompt"></span>prompt</span>
+        <span class="legend-item"><span class="legend-dot denied"></span>denied</span>
+        <span class="legend-item"><span class="legend-dot unknown"></span>unknown</span>
+        <span class="legend-item"><span class="legend-dot unsupported"></span>unsupported</span>
         <span class="help-icon" data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定（使う前に尋ねられる）&#10;denied=拒否済み&#10;unknown=機能はあるが、このブラウザーでは照会できない&#10;unsupported=機能の API がない">?</span>
       </div>
     </div>
@@ -49,9 +49,9 @@
           </h3>
           <p class="muted small">geolocation / camera / microphone / midi</p>
           <p class="muted tiny score-measured" id="measured-device"></p>
-          <canvas id="radarDevice" width="360" height="360" aria-label="Device Permissions Radar"></canvas>
+          <svg id="radarDevice" class="radar" viewBox="0 0 400 400" role="group" aria-label="デバイスアクセス系のレーダー"></svg>
           <div role="status" aria-live="polite" id="radar-status-device" class="sr-only"></div>
-          <p class="muted tiny">※ 点をクリックすると「詳細」タブの該当権限へジャンプします。</p>
+          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tab キーで点を選び、Enter でも移れます）。</p>
         </div>
 
         <div class="card">
@@ -62,9 +62,9 @@
           </h3>
           <p class="muted small">clipboard-read / clipboard-write / persistent-storage / background-sync</p>
           <p class="muted tiny score-measured" id="measured-data"></p>
-          <canvas id="radarData" width="360" height="360" aria-label="Data Permissions Radar"></canvas>
+          <svg id="radarData" class="radar" viewBox="0 0 400 400" role="group" aria-label="データアクセス系のレーダー"></svg>
           <div role="status" aria-live="polite" id="radar-status-data" class="sr-only"></div>
-          <p class="muted tiny">※ 点をクリックすると「詳細」タブの該当権限へジャンプします。</p>
+          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tab キーで点を選び、Enter でも移れます）。</p>
         </div>
 
         <div class="card">
@@ -75,9 +75,9 @@
           </h3>
           <p class="muted small">notifications / push / payment-handler / idle-detection</p>
           <p class="muted tiny score-measured" id="measured-comm"></p>
-          <canvas id="radarComm" width="360" height="360" aria-label="Communication Permissions Radar"></canvas>
+          <svg id="radarComm" class="radar" viewBox="0 0 400 400" role="group" aria-label="通信・通知系のレーダー"></svg>
           <div role="status" aria-live="polite" id="radar-status-comm" class="sr-only"></div>
-          <p class="muted tiny">※ 点をクリックすると「詳細」タブの該当権限へジャンプします。</p>
+          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tab キーで点を選び、Enter でも移れます）。</p>
         </div>
       </div>
 

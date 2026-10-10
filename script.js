@@ -9,8 +9,9 @@
  * @author ipusiron
  * @license MIT
  */
-import { GROUPS, summarize, formatScore, stateToScore } from './js/perm-core.js';
+import { GROUPS, summarize, formatScore } from './js/perm-core.js';
 import { scanAll, diffResults } from './js/scanner.js';
+import { renderRadar } from './js/radar-svg.js';
 import { t } from './js/i18n.js';
 
 (() => {
@@ -45,18 +46,11 @@ import { t } from './js/i18n.js';
   // DOM Elements
   // ========================================
 
-  // レーダーチャート用キャンバス要素
-  const canvases = {
-    device: /** @type {HTMLCanvasElement} */ (document.getElementById('radarDevice')),
-    data:   /** @type {HTMLCanvasElement} */ (document.getElementById('radarData')),
-    comm:   /** @type {HTMLCanvasElement} */ (document.getElementById('radarComm')),
-  };
-
-  // 2Dコンテキスト
-  const ctxs = {
-    device: canvases.device.getContext('2d'),
-    data: canvases.data.getContext('2d'),
-    comm: canvases.comm.getContext('2d'),
+  // レーダーの SVG 要素
+  const radarSvgs = {
+    device: document.getElementById('radarDevice'),
+    data:   document.getElementById('radarData'),
+    comm:   document.getElementById('radarComm'),
   };
 
   // スコア表示要素
@@ -235,6 +229,7 @@ import { t } from './js/i18n.js';
       hr.appendChild(th);
     }
     const tbody = table.createTBody();
+    const labels = ['table.permission', 'table.state', 'table.source', 'table.group'].map(k => t(k));
     for (const r of results) {
       const tr = tbody.insertRow();
       tr.id = `perm-row-${r.key}`;
@@ -269,6 +264,8 @@ import { t } from './js/i18n.js';
       const c4 = tr.insertCell();
       c4.className = 'muted';
       c4.textContent = r.group;
+      // 狭い画面の縦積みで、各セルの左に列の見出しを出す
+      [...tr.cells].forEach((cell, i) => { cell.dataset.label = labels[i]; });
     }
     permTableWrap.replaceChildren(table);
 
@@ -298,25 +295,37 @@ import { t } from './js/i18n.js';
   });
 
   // ========================================
-  // Radar Chart Rendering with Clickable Points
+  // Radar (SVG)
   // ========================================
 
-  /**
-   * クリック可能な点の座標を保存
-   * @type {Object.<string, Array<{x: number, y: number, key: string, r: number}>>}
-   */
-  const clickMaps = { device:[], data:[], comm:[] };
+  /** 詳細タブへ移り、その行へスクロールして軽くハイライトする */
+  function jumpToRow(groupKey, key) {
+    selectTab('details');
+    requestAnimationFrame(() => {
+      applyFilter(groupKey);
+      const row = key ? document.getElementById(`perm-row-${key}`)
+        : permTableWrap.querySelector(`tbody tr[data-group="${groupKey}"]`);
+      if (row) {
+        row.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
+        row.classList.remove('highlight'); void row.offsetWidth; row.classList.add('highlight');
+      }
+    });
+  }
+
+  function reducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
 
   /**
-   * カテゴリごとのレーダーチャートを描画
+   * カテゴリごとのレーダーとスコアを描く
    * @param {string} groupKey - カテゴリキー ('device', 'data', 'comm')
-   * @param {Array} results - 権限スキャン結果
-   * @param {HTMLCanvasElement} canvas - キャンバス要素
-   * @param {CanvasRenderingContext2D} ctx - 2Dコンテキスト
+   * @param {Array} results - 照会結果
    */
-  function drawRadarGroup(groupKey, results, canvas, ctx){
+  function drawRadarGroup(groupKey, results){
     const list = GROUPS[groupKey];
-    const subset = results.filter(r => list.includes(r.key));
+    const byKey = new Map(results.map(r => [r.key, r]));
+    const items = list.map(key => ({ key, state: (byKey.get(key) || {}).state || 'unsupported' }));
+
     // スコア（照会できない権限は平均から外す）
     const sum = summarize(results)[groupKey];
     scoreEls[groupKey].textContent = formatScore(sum.score);
@@ -326,206 +335,22 @@ import { t } from './js/i18n.js';
     // 読み上げ用の要約
     const statusEl = document.getElementById(`radar-status-${groupKey}`);
     if (statusEl) {
-      const summary = subset.map(r => `${r.key}: ${t(`state.${r.state}`)}`).join(', ');
+      const summary = items.map(r => `${r.key}: ${t(`state.${r.state}`)}`).join(', ');
       statusEl.textContent = t('radar.status', {
         group: t(`group.${groupKey}`), score: formatScore(sum.score), measured: measuredText, states: summary,
       });
     }
 
-    // draw
-    const W = canvas.width, H = canvas.height;
-    const cx = W/2, cy = H/2;
-    const R = Math.min(W,H)*0.38;
-    const N = subset.length || 1;
-
-    ctx.clearRect(0,0,W,H);
-    // Draw grid circles with cyberpunk style
-    ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent') || '#00f0ff';
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.3;
-    [0.25,0.5,0.75,1.0].forEach(mult=>{
-      ctx.beginPath(); ctx.arc(cx,cy,R*mult,0,Math.PI*2); ctx.stroke();
-    });
-    ctx.globalAlpha = 1;
-
-    // axes
-    ctx.globalAlpha = 0.4;
-    for(let i=0;i<N;i++){
-      const a = (-Math.PI/2) + (i*(2*Math.PI/N));
-      const x = cx + Math.cos(a)*R;
-      const y = cy + Math.sin(a)*R;
-      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent') || '#00f0ff';
-      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x,y); ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-
-    // polygon (draw before labels so labels appear on top)
-    const pts = subset.map((r,i)=>{
-      const a = (-Math.PI/2) + (i*(2*Math.PI/N));
-      const rad = R*(stateToScore(r.state) ?? 0);
-      return { x: cx+Math.cos(a)*rad, y: cy+Math.sin(a)*rad, key:r.key, state:r.state };
-    });
-
-    if (pts.length){
-      ctx.beginPath();
-      pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
-      ctx.closePath();
-      // Cyberpunk gradient fill
-      const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-      gradient.addColorStop(0, 'rgba(0,240,255,0.3)');
-      gradient.addColorStop(1, 'rgba(255,0,255,0.1)');
-      ctx.fillStyle = gradient;
-      ctx.fill();
-      // Neon stroke
-      ctx.strokeStyle = '#00f0ff';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = 'rgba(0,240,255,0.8)';
-      ctx.shadowBlur = 10;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-
-    // Draw labels using floating callouts to avoid clipping (drawn after polygon but before points)
-    const axisColor = getComputedStyle(document.body).getPropertyValue('--accent') || '#00f0ff';
-    const labelBg = 'rgba(6, 14, 28, 0.98)';  // Increased opacity from 0.92 to 0.98
-    const labelBorder = 'rgba(0, 240, 255, 0.6)';  // Increased opacity from 0.45 to 0.6
-    const labelTextColor = '#00f0ff';
-    const labelShadowColor = 'rgba(0, 0, 0, 0.9)';  // Increased opacity from 0.7 to 0.9
-    const labelMargin = 12;
-    const padX = 10;
-    const padY = 6;
-    const lineHeight = 16;
-    ctx.font = '600 13px "Segoe UI", "Hiragino Sans", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-
-    for(let i=0;i<N;i++){
-      const a = (-Math.PI/2) + (i*(2*Math.PI/N));
-      const key = subset[i]?.key;
-      if (!key) continue;
-
-      const segments = key.split('-').map(part => part.trim()).filter(Boolean);
-      const lines = (segments.length ? segments : [key]).map(text => text.toUpperCase());
-      const widths = lines.map(line => ctx.measureText(line).width);
-      const textWidth = widths.length ? Math.max(...widths) : 0;
-      const textHeight = lineHeight * (lines.length || 1);
-      const boxWidth = textWidth + padX * 2;
-      const boxHeight = textHeight + padY * 2;
-
-      const axisEndX = cx + Math.cos(a) * R;
-      const axisEndY = cy + Math.sin(a) * R;
-
-      let boxX = cx + Math.cos(a) * (R + 28) - boxWidth / 2;
-      let boxY = cy + Math.sin(a) * (R + 28) - boxHeight / 2;
-      boxX += Math.cos(a) * 10;
-      boxY += Math.sin(a) * 10;
-
-      if (boxX < labelMargin) boxX = labelMargin;
-      if (boxX + boxWidth > W - labelMargin) boxX = W - labelMargin - boxWidth;
-      if (boxY < labelMargin) boxY = labelMargin;
-      if (boxY + boxHeight > H - labelMargin) boxY = H - labelMargin - boxHeight;
-
-      const centerX = boxX + boxWidth / 2;
-      const centerY = boxY + boxHeight / 2;
-
-      ctx.strokeStyle = axisColor;
-      ctx.globalAlpha = 0.45;
-      ctx.beginPath();
-      ctx.moveTo(axisEndX, axisEndY);
-      ctx.lineTo(centerX, centerY);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      ctx.fillStyle = labelBg;
-      ctx.strokeStyle = labelBorder;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 6);
-        ctx.fill();
-        ctx.stroke();
-      } else {
-        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-      }
-
-      lines.forEach((line, idx) => {
-        const textX = boxX + padX;
-        const textY = boxY + padY + idx * lineHeight;
-        ctx.fillStyle = labelShadowColor;
-        ctx.fillText(line, textX + 1, textY + 1);
-        ctx.fillStyle = labelTextColor;
-        ctx.fillText(line, textX, textY);
-      });
-    }
-
-    // points with glow effect (drawn last so they appear on top)
-    clickMaps[groupKey] = [];
-    pts.forEach(p=>{
-      const color =
-        p.state==='granted'?getCSS('--granted'):
-        p.state==='denied'?getCSS('--denied'):
-        p.state==='prompt'?getCSS('--prompt'):
-        p.state==='unknown'?getCSS('--unknown'):getCSS('--unsupported');
-
-      // Draw glow
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 15;
-      ctx.beginPath(); ctx.arc(p.x,p.y,6,0,Math.PI*2);
-      ctx.fillStyle = color; ctx.fill();
-
-      // Draw point
-      ctx.shadowBlur = 0;
-      ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2);
-      ctx.fillStyle = color; ctx.fill();
-      ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
-
-      clickMaps[groupKey].push({x:p.x,y:p.y,key:p.key,r:30});
+    renderRadar(radarSvgs[groupKey], {
+      items,
+      pointLabel: key => t('radar.point', { key, state: t(`state.${(byKey.get(key) || {}).state || 'unsupported'}`) }),
+      onSelect: key => jumpToRow(groupKey, key),
     });
   }
 
-  function getCSS(varName){ return getComputedStyle(document.documentElement).getPropertyValue(varName) || '#999'; }
-
-  // click handler: find nearest point & jump to details
-  function setupCanvasClick(groupKey, canvas){
-    canvas.addEventListener('click', (ev)=>{
-      const rect = canvas.getBoundingClientRect();
-      const x = ev.clientX - rect.left;
-      const y = ev.clientY - rect.top;
-      const hits = clickMaps[groupKey] || [];
-      let target = null, dmin = Infinity;
-      hits.forEach(p=>{
-        const d = Math.hypot(p.x - x, p.y - y);
-        if (d < p.r && d < dmin){ dmin = d; target = p; }
-      });
-      if (target){
-        // jump to details and highlight the row
-        selectTab('details');
-        // auto filter to group
-        requestAnimationFrame(() => {
-          applyFilter(groupKey);
-          const row = document.getElementById(`perm-row-${target.key}`);
-          if (row){
-            row.scrollIntoView({behavior:'smooth', block:'center'});
-            row.classList.remove('highlight'); void row.offsetWidth; row.classList.add('highlight');
-          }
-        });
-      }
-    });
-  }
-
-  // score link -> details filter
+  // スコアのボタン → 詳細タブをそのカテゴリに絞る
   Object.entries(scoreLinks).forEach(([groupKey, btn])=>{
-    btn.addEventListener('click', ()=>{
-      selectTab('details');
-      applyFilter(groupKey);
-      // scroll to first row of the group if exists
-      const first = permTableWrap.querySelector(`tbody tr[data-group="${groupKey}"]`);
-      if (first){
-        first.scrollIntoView({behavior:'smooth', block:'center'});
-        first.classList.remove('highlight'); void first.offsetWidth; first.classList.add('highlight');
-      }
-    });
+    btn.addEventListener('click', () => jumpToRow(groupKey, null));
   });
 
   // ----- Logging -----
@@ -699,9 +524,9 @@ import { t } from './js/i18n.js';
     for (const c of changes) log(t(fromChange ? 'log.change' : 'log.diff', c));
     if (!quiet) log(t('log.rescan', { n: results.length }));
     lastResults = results.slice();
-    drawRadarGroup('device', results, canvases.device, ctxs.device);
-    drawRadarGroup('data',   results, canvases.data,   ctxs.data);
-    drawRadarGroup('comm',   results, canvases.comm,   ctxs.comm);
+    drawRadarGroup('device', results);
+    drawRadarGroup('data', results);
+    drawRadarGroup('comm', results);
     renderTable(results);
     watch(results);
     return results;
@@ -728,10 +553,6 @@ import { t } from './js/i18n.js';
     return run.promise;
   }
 
-  // setup click detection per canvas
-  setupCanvasClick('device', canvases.device);
-  setupCanvasClick('data',   canvases.data);
-  setupCanvasClick('comm',   canvases.comm);
 
   // ========================================
   // Accordion Functionality (Learn Tab)

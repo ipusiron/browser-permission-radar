@@ -73,3 +73,14 @@ test('circleRectOverlap と rectsOverlap の境界', () => {
   assert.equal(rectsOverlap(r, { x: 20, y: 10, w: 5, h: 5 }), false);
   assert.equal(rectsOverlap(r, { x: 19, y: 19, w: 5, h: 5 }), true);
 });
+
+test('radar-svg: 点を描く半径は最小 0.05（中心で重ならない）、照会できない点も同じ', async () => {
+  const { displayRadius, MIN_DISPLAY_RADIUS, measureLabel } = await import('../js/radar-svg.js');
+  assert.equal(MIN_DISPLAY_RADIUS, 0.05);
+  assert.equal(displayRadius('granted'), 1);
+  assert.equal(displayRadius('prompt'), 0.5);
+  assert.equal(displayRadius('denied'), 0.1);
+  assert.equal(displayRadius('unsupported'), 0.05);
+  assert.equal(displayRadius('unknown'), 0.05);
+  assert.equal(measureLabel('MIDI'), 4 * LABEL.font * 0.6);
+});
