@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Browser Permission Radar - ブラウザー権限可視化ツール</title>
 
-  <!-- CSP（meta で効く範囲。frame-ancestors は meta では効かないので書かない） -->
+  <!-- CSP（metaで効く範囲。frame-ancestorsはmetaでは効かないので書かない） -->
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; worker-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
@@ -17,14 +17,14 @@
 <body>
   <header class="topbar">
     <h1>Browser Permission Radar</h1>
-    <p class="subtitle">ブラウザーの主要権限（位置情報・カメラ・マイク・通知・クリップボードなど）をレーダーチャート＋スコア表示でわかりやすく可視化します</p>
+    <p class="subtitle">このページに対するブラウザーの権限（位置情報・カメラ・マイク・通知・クリップボードなど）を、レーダーとスコアで可視化します</p>
   </header>
 
   <main class="container">
     <div id="frameNotice" class="notice" role="note" hidden>
-      このページは別のページに埋め込まれて（iframe の中で）開かれています。埋め込み元の Permissions Policy で許されていない権限は、尋ねられずに denied になります。単独のタブで開くと、このサイトに対する状態が見えます。
+      このページは別のページに埋め込まれて（iframeの中で）開かれています。埋め込み元のPermissions Policyで許されていない権限は、尋ねられずにdeniedになります。単独のタブで開くと、このサイトに対する状態が見えます。
     </div>
-    <noscript><p class="notice">このツールは JavaScript で権限を照会します。JavaScript を有効にしてください。</p></noscript>
+    <noscript><p class="notice">このツールはJavaScriptで権限を照会します。JavaScriptを有効にしてください。</p></noscript>
 
     <div class="tabs" role="tablist" aria-label="表示の切り替え">
       <button type="button" id="tab-radar" data-tab="radar" class="tab active" role="tab" aria-selected="true" aria-controls="radar">レーダー</button>
@@ -40,7 +40,7 @@
         <span class="legend-item"><span class="legend-dot denied"></span>denied</span>
         <span class="legend-item"><span class="legend-dot unknown"></span>unknown</span>
         <span class="legend-item"><span class="legend-dot unsupported"></span>unsupported</span>
-        <button type="button" class="help-icon" data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定（使う前に尋ねられる）&#10;denied=拒否済み&#10;unknown=機能はあるが、このブラウザーでは照会できない&#10;unsupported=機能の API がない" aria-label="説明">?</button>
+        <button type="button" class="help-icon" data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定（使う前に尋ねられる）&#10;denied=拒否済み&#10;unknown=機能はあるが、このブラウザーでは照会できない&#10;unsupported=機能のAPIがない" aria-label="説明">?</button>
       </div>
     </div>
 
@@ -57,7 +57,7 @@
           <p class="muted tiny score-measured" id="measured-device"></p>
           <svg id="radarDevice" class="radar" viewBox="0 0 400 400" role="group" aria-label="デバイスアクセス系のレーダー"></svg>
           <div role="status" aria-live="polite" id="radar-status-device" class="sr-only"></div>
-          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tab キーで点を選び、Enter でも移れます）。</p>
+          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
 
         <div class="card">
@@ -70,7 +70,7 @@
           <p class="muted tiny score-measured" id="measured-data"></p>
           <svg id="radarData" class="radar" viewBox="0 0 400 400" role="group" aria-label="データアクセス系のレーダー"></svg>
           <div role="status" aria-live="polite" id="radar-status-data" class="sr-only"></div>
-          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tab キーで点を選び、Enter でも移れます）。</p>
+          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
 
         <div class="card">
@@ -83,7 +83,7 @@
           <p class="muted tiny score-measured" id="measured-comm"></p>
           <svg id="radarComm" class="radar" viewBox="0 0 400 400" role="group" aria-label="通信・通知系のレーダー"></svg>
           <div role="status" aria-live="polite" id="radar-status-comm" class="sr-only"></div>
-          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tab キーで点を選び、Enter でも移れます）。</p>
+          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
       </div>
 
@@ -133,11 +133,11 @@
           </div>
           <div class="test-item">
             <button type="button" id="testBgSync" class="test-btn">🔄 Background Sync</button>
-            <span class="test-desc">押したときだけ Service Worker（sw.js、通信しない）を登録し、同期を登録</span>
+            <span class="test-desc">押したときだけService Worker（sw.js、通信しない）を登録し、同期を登録</span>
           </div>
           <div class="test-item">
             <button type="button" id="cleanupSW" class="test-btn">🧹 Cleanup</button>
-            <span class="test-desc">このツールが登録した Service Worker を解除（後片付け）</span>
+            <span class="test-desc">このツールが登録したService Workerを解除（後片付け）</span>
           </div>
         </div>
         <div id="log" class="log" role="log" aria-live="polite"></div>
@@ -159,7 +159,7 @@
             <button type="button" class="chip" data-filter="comm">Comm</button>
           </div>
         </div>
-        <p class="muted">照会できない権限は <code>unknown</code>、機能の API がないものは <code>unsupported</code> と表示します。「出所」は、状態をどこから読んだかです。</p>
+        <p class="muted">照会できない権限は<code>unknown</code>、機能のAPIがないものは<code>unsupported</code>と表示します。「出所」は、状態をどこから読んだかです。</p>
         <div id="permTableWrap" class="table-wrap"></div>
       </div>
     </section>
@@ -173,15 +173,15 @@
         <!-- Accordion 1 -->
         <div class="accordion-section">
           <button type="button" class="accordion-header" data-accordion="permissions-api" aria-expanded="false" aria-controls="acc-permissions-api">
-            🔑 Permissions API とは
+            🔑 Permissions APIとは
           </button>
           <div class="accordion-content" id="acc-permissions-api" data-accordion-content="permissions-api">
-            <p><strong>Permissions API</strong> は、Web ページがブラウザーの機能（位置情報・カメラ・通知など）を使ってよいかの状態を、共通の方法で問い合わせる仕組みです。</p>
+            <p><strong>Permissions API</strong>は、Webページがブラウザーの機能（位置情報・カメラ・通知など）を使ってよいかの状態を、共通の方法で問い合わせる仕組みです。</p>
             <ul>
-              <li>照会の書き方：<code>navigator.permissions.query({ name: 'camera' })</code>。答えは <code>granted</code>（許可済み）・<code>prompt</code>（使う前に尋ねられる）・<code>denied</code>（拒否済み）の3つ</li>
-              <li>このツールの表示：照会できなかった権限は、機能の API があれば <code>unknown</code>（照会できない）、なければ <code>unsupported</code>（機能なし）と分けて出す。unknown はスコアの平均に入れない</li>
-              <li>ブラウザーごとに照会できる名前が違う：Chromium 系（Chrome・Edge）は多く、Firefox・Safari は少ない。知らない名前は TypeError で拒否される</li>
-              <li>通知だけは古い <code>Notification.permission</code> でも読める。未決定は <code>default</code> と返り、Permissions API の <code>prompt</code> にあたる</li>
+              <li>照会の書き方：<code>navigator.permissions.query({ name: 'camera' })</code>。答えは<code>granted</code>（許可済み）・<code>prompt</code>（使う前に尋ねられる）・<code>denied</code>（拒否済み）の3つ</li>
+              <li>このツールの表示：照会できなかった権限は、機能のAPIがあれば<code>unknown</code>（照会できない）、なければ<code>unsupported</code>（機能なし）と分けて出す。unknownはスコアの平均に入れない</li>
+              <li>ブラウザーごとに照会できる名前が違う：Chromium系（Chrome・Edge）は多く、Firefox・Safariは少ない。知らない名前はTypeErrorで拒否される</li>
+              <li>通知だけは古い<code>Notification.permission</code>でも読める。未決定は<code>default</code>と返り、Permissions APIの<code>prompt</code>にあたる</li>
             </ul>
           </div>
         </div>
@@ -193,10 +193,10 @@
           </button>
           <div class="accordion-content" id="acc-scope" data-accordion-content="scope">
             <ul>
-              <li>照会で見えるのは、照会したページのオリジン（このツールなら <code>https://ipusiron.github.io</code>）への決定だけ。ほかのサイトに与えた許可は、どのページからも見えない</li>
-              <li>ほかのサイトの許可を確かめるには、ブラウザーの設定を開く（Chrome は <code>chrome://settings/content</code>、Edge は <code>edge://settings/content</code>、Firefox は <code>about:preferences#privacy</code> の「許可設定」）</li>
+              <li>照会で見えるのは、照会したページのオリジン（このツールなら<code>https://ipusiron.github.io</code>）への決定だけ。ほかのサイトに与えた許可は、どのページからも見えない</li>
+              <li>ほかのサイトの許可を確かめるには、ブラウザーの設定を開く（Chromeは<code>chrome://settings/content</code>、Edgeは<code>edge://settings/content</code>、Firefoxは<code>about:preferences#privacy</code>の「許可設定」）</li>
               <li>照会には利用者の操作が要らない。どのサイトも、開いた瞬間に同じ照会ができる。尋ねずに読めるこの情報は、ブラウザーを見分ける材料（指紋）にもなる</li>
-              <li>iframe に埋め込まれたページは、埋め込み元の Permissions Policy に従う。許されていない機能は、尋ねられずに <code>denied</code> になる</li>
+              <li>iframeに埋め込まれたページは、埋め込み元のPermissions Policyに従う。許されていない機能は、尋ねられずに<code>denied</code>になる</li>
             </ul>
           </div>
         </div>
@@ -211,25 +211,25 @@
             <ul>
               <li>camera / microphone：盗撮・盗聴。許可を与えたサイトは、ページを開いている間ずっと使える</li>
               <li>geolocation：行動の追跡・居場所の特定</li>
-              <li>midi：接続している MIDI 機器の構成が、ブラウザーを見分ける材料になる</li>
+              <li>midi：接続しているMIDI機器の構成が、ブラウザーを見分ける材料になる</li>
             </ul>
 
             <h3>🔵 データアクセス系</h3>
             <ul>
               <li>clipboard-read：コピーしたパスワードや機密情報の読み取り</li>
-              <li>clipboard-write：ClickFix と呼ばれる手口で悪用される。偽の CAPTCHA のボタンを押させ、裏で
-                <code>navigator.clipboard.writeText()</code> により悪性のコマンドをクリップボードに書き込み、
+              <li>clipboard-write：ClickFixと呼ばれる手口で悪用される。偽のCAPTCHAのボタンを押させ、裏で
+                <code>navigator.clipboard.writeText()</code>により悪性のコマンドをクリップボードに書き込み、
                 「Win+R（ファイル名を指定して実行）やターミナルに貼り付けて実行して」と指示する（Microsoft Security Blog、2025年8月）。
-                Chromium 系ではこの書き込みに許可を求められない</li>
+                Chromium系ではこの書き込みに許可を求められない</li>
               <li>persistent-storage：消されにくい保存領域。長く残る識別子・容量の圧迫</li>
-              <li>background-sync：ページを閉じたあとも Service Worker が同期できる。Chromium 系では既定で許可されている</li>
+              <li>background-sync：ページを閉じたあともService Workerが同期できる。Chromium系では既定で許可されている</li>
             </ul>
 
             <h3>🟣 通信・通知系</h3>
             <ul>
               <li>notifications：偽の警告の通知で、フィッシングサイトへ誘導する</li>
               <li>push：ページを閉じていても届く。通知の許可と組み合わせて使われる</li>
-              <li>payment-handler：Web の決済アプリ。偽の決済画面の土台になりうる</li>
+              <li>payment-handler：Webの決済アプリ。偽の決済画面の土台になりうる</li>
               <li>idle-detection：操作していない・画面がロックされた、を検知する。在席・離席の監視</li>
             </ul>
           </div>
@@ -242,11 +242,11 @@
           </button>
           <div class="accordion-content" id="acc-persistence" data-accordion-content="persistence">
             <ul>
-              <li>今回のみの許可：Chrome（116以降のデスクトップ版）は、位置情報・カメラ・マイクで「今回のみ許可」を選べる。ページを閉じる・別のページへ移る・5分以上裏に置く・16時間たつ、のいずれかで失効し、<code>granted</code> から <code>prompt</code> に戻る</li>
-              <li>Firefox は、カメラ・マイクの問い合わせで「この決定を記憶する」を付けなければ一時的な許可になり、1時間たつかタブを閉じると消える</li>
-              <li>Safari は、拒否していても、実際にカメラ・位置情報などを要求するまでは <code>prompt</code> と答えることがある。また <code>change</code> の通知が届かないので、このツールのライブ更新は効かない</li>
-              <li>尋ねられない権限：Chromium 系では background-sync・センサー・clipboard-write が既定で許可されている（このツールでは開いた直後から granted と出る）。persistent-storage は Chromium 系と Safari が利用状況で自動で決め、Firefox は尋ねる</li>
-              <li>このツールは <code>change</code> の通知を受け取り、ブラウザーの設定やアドレスバーの鍵のアイコンから許可を変えると、その場でレーダーとログに反映する</li>
+              <li>今回のみの許可：Chrome（116以降のデスクトップ版）は、位置情報・カメラ・マイクで「今回のみ許可」を選べる。ページを閉じる・別のページへ移る・5分以上裏に置く・16時間たつ、のいずれかで失効し、<code>granted</code>から<code>prompt</code>に戻る</li>
+              <li>Firefoxは、カメラ・マイクの問い合わせで「この決定を記憶する」を付けなければ一時的な許可になり、1時間たつかタブを閉じると消える</li>
+              <li>Safariは、拒否していても、実際にカメラ・位置情報などを要求するまでは<code>prompt</code>と答えることがある。また<code>change</code>の通知が届かないので、このツールのライブ更新は効かない</li>
+              <li>尋ねられない権限：Chromium系ではbackground-sync・センサー・clipboard-writeが既定で許可されている（このツールでは開いた直後からgrantedと出る）。persistent-storageはChromium系とSafariが利用状況で自動で決め、Firefoxは尋ねる</li>
+              <li>このツールは<code>change</code>の通知を受け取り、ブラウザーの設定やアドレスバーの鍵のアイコンから許可を変えると、その場でレーダーとログに反映する</li>
             </ul>
           </div>
         </div>
@@ -262,7 +262,7 @@
               <li>定期的な見直し：ブラウザーの設定（サイトの設定・許可設定）から、使わなくなったサイトの許可を取り消す</li>
               <li>オリジンの確認：許可する前に、問い合わせに表示されたサイトの名前（オリジン）が意図したものかを確かめる</li>
               <li>すぐに止める：カメラ・マイクは使い終わったら止める（このツールも取得してすぐ止める）</li>
-              <li>貼り付けて実行しない：ページの指示でコマンドを「ファイル名を指定して実行」やターミナルに貼り付けない（ClickFix 対策）</li>
+              <li>貼り付けて実行しない：ページの指示でコマンドを「ファイル名を指定して実行」やターミナルに貼り付けない（ClickFix対策）</li>
               <li>プライベートウィンドウ：一時的に試したいときは、プライベートウィンドウを使う</li>
             </ul>
           </div>
@@ -275,11 +275,11 @@
           </button>
           <div class="accordion-content" id="acc-how-to-learn" data-accordion-content="how-to-learn">
             <ol>
-              <li>現在の状態を確認：「レーダー」タブで、このサイトに対する状態を見る（開いた直後から granted の権限は、尋ねずに許可されているもの）</li>
+              <li>現在の状態を確認：「レーダー」タブで、このサイトに対する状態を見る（開いた直後からgrantedの権限は、尋ねずに許可されているもの）</li>
               <li>権限を体験：「クイックテスト」で要求を出し、ブラウザーの問い合わせを体験する（カメラ・マイクはすぐ止め、座標・クリップボードの内容は表示しない）</li>
               <li>変化を観察：許可・拒否のあと、レーダーとログが自動で変わる。鍵のアイコンから許可を取り消しても変わる</li>
               <li>詳細を理解：「詳細」タブで、状態の出所（Permissions API／Notification.permission／照会できない理由）を確かめる</li>
-              <li>リセット：ブラウザーの設定でこのサイトの許可を取り消し、「Cleanup」で Service Worker の登録を解除する</li>
+              <li>リセット：ブラウザーの設定でこのサイトの許可を取り消し、「Cleanup」でService Workerの登録を解除する</li>
             </ol>
           </div>
         </div>
@@ -296,7 +296,7 @@
               <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Permissions_Policy" target="_blank" rel="noopener noreferrer">MDN: Permissions Policy（英語）</a></li>
               <li><a href="https://developer.chrome.com/blog/one-time-permissions" target="_blank" rel="noopener noreferrer">Chrome for Developers: One-time permissions（英語）</a></li>
               <li><a href="https://www.microsoft.com/en-us/security/blog/2025/08/21/think-before-you-clickfix-analyzing-the-clickfix-social-engineering-technique/"
-                  target="_blank" rel="noopener noreferrer">Microsoft Security Blog: ClickFix の分析（英語）</a></li>
+                  target="_blank" rel="noopener noreferrer">Microsoft Security Blog: ClickFixの分析（英語）</a></li>
               <li><a href="https://github.com/ipusiron/browser-permission-radar/blob/main/PERMISSIONS_API.md" target="_blank" rel="noopener noreferrer">技術仕様書（このリポジトリー）</a></li>
             </ul>
           </div>
@@ -309,7 +309,7 @@
 
   <footer>
     <div class="footer">
-      🔗 <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank" rel="noopener noreferrer">GitHub リポジトリー（ipusiron/browser-permission-radar）</a>
+      🔗 <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank" rel="noopener noreferrer">GitHubリポジトリー（ipusiron/browser-permission-radar）</a>
     </div>
   </footer>
 

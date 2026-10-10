@@ -378,6 +378,8 @@ a:focus-visible,
   font-family:"Courier New",monospace;
   box-shadow:inset 0 2px 8px rgba(0,0,0,0.4);
   line-height:1.6;
+  white-space:pre-wrap;  /* 1件ごとの改行を表示する */
+  overflow-wrap:anywhere;
 }
 
 .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border-width:0}

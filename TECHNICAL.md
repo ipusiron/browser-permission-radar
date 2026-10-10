@@ -1,464 +1,176 @@
 # Technical Implementation Guide
 
-Browser Permission Radarの技術的実装の詳細を解説します。
+Browser Permission Radarの実装の詳細を解説します。行番号は書かず、ファイルと関数の名前で示します。
 
 ---
 
 ## 📋 目次
 
-1. [レーダーチャート描画アルゴリズム](#レーダーチャート描画アルゴリズム)
-2. [クリック判定システム](#クリック判定システム)
-3. [ツールチップの動的配置アルゴリズム](#ツールチップの動的配置アルゴリズム)
-4. [権限スキャンとフォールバック機構](#権限スキャンとフォールバック機構)
-5. [セキュリティ対策の実装](#セキュリティ対策の実装)
-6. [アコーディオンアニメーション](#アコーディオンアニメーション)
+1. [モジュールの構成](#モジュールの構成)
+2. [照会と分類](#照会と分類)
+3. [スコア](#スコア)
+4. [ライブ更新](#ライブ更新)
+5. [レーダーの描画（SVG）](#レーダーの描画svg)
+6. [権限テストとBackground Sync](#権限テストとbackground-sync)
+7. [ツールチップ・タブ・アコーディオン](#ツールチップタブアコーディオン)
+8. [セキュリティ対策の実装](#セキュリティ対策の実装)
+9. [テスト](#テスト)
 
 ---
 
-## レーダーチャート描画アルゴリズム
+## モジュールの構成
 
-### 概要
+| ファイル | 役割 | DOM |
+|---|---|---|
+| `js/perm-core.js` | 権限の定義（`PERMISSIONS`・`GROUPS`）、状態の分類（`classify`）、スコア（`SCORE_TABLE`・`groupScore`・`summarize`） | 使わない |
+| `js/scanner.js` | 照会（`queryOne`・`scanAll`）、機能の有無（`detectFeatures`）、差分（`diffResults`）。ブラウザーのAPIは引数`env`で受け取る | 使わない |
+| `js/radar-geom.js` | レーダーの座標（`axisAngles`・`pointsFor`）とラベルの配置（`labelBox`） | 使わない |
+| `js/radar-svg.js` | レーダーをSVGで描く（`renderRadar`） | 使う |
+| `js/messages.js`・`js/i18n.js` | 文言の辞書と取り出し（`t`） | 使わない |
+| `script.js` | 画面の処理（タブ・表・ツールチップ・権限テスト・ライブ更新） | 使う |
+| `sw.js` | Background Syncを試すときだけ登録するService Worker | - |
 
-3つのカテゴリ（デバイス、データ、通信）ごとに独立したレーダーチャートをHTML5 Canvasで描画しています。
-
-### 描画順序の最適化
-
-点がラベルに隠れないよう、描画順序を以下のように最適化しています：
-
-```javascript
-// script.js:396-558
-function drawRadarGroup(groupKey, results, canvas, ctx){
-  // 1. グリッド（同心円と軸）
-  // 2. ポリゴン（塗りつぶし＋ストローク）
-  // 3. ラベル（背景→テキスト）
-  // 4. 点（グロー→ポイント）← 最後に描画で最前面
-}
-```
-
-**ポイント**:
-- 点を最後に描画することで、MAX値（granted = 1.0）の場合でもラベルに隠れない
-- 以前は「ラベル → ポリゴン → 点」の順序だったが、「ポリゴン → ラベル → 点」に変更
-
-### 座標計算
-
-極座標系を使用してN角形のレーダーチャートを描画：
-
-```javascript
-// script.js:501-506
-const pts = subset.map((r,i)=>{
-  const a = (-Math.PI/2) + (i*(2*Math.PI/N));  // 角度（上から時計回り）
-  const rad = R*stateToScore(r.state);         // 半径（スコアに応じて変化）
-  return { x: cx+Math.cos(a)*rad, y: cy+Math.sin(a)*rad, key:r.key, state:r.state };
-});
-```
-
-**計算式**:
-- 開始角度: `-Math.PI/2` (上方向)
-- 角度増分: `2*Math.PI/N` (N等分)
-- 座標変換: 極座標 → デカルト座標
-
-### ラベル配置の自動調整
-
-ラベルが画面端で切れないよう、境界チェックを実装：
-
-```javascript
-// script.js:456-476
-let boxX = cx + Math.cos(a) * (R + 28) - boxWidth / 2;
-let boxY = cy + Math.sin(a) * (R + 28) - boxHeight / 2;
-
-// 画面端調整
-if (boxX < labelMargin) boxX = labelMargin;
-if (boxX + boxWidth > W - labelMargin) boxX = W - labelMargin - boxWidth;
-if (boxY < labelMargin) boxY = labelMargin;
-if (boxY + boxHeight > H - labelMargin) boxY = H - labelMargin - boxHeight;
-```
+DOMを使わないモジュールは、`node --test`でそのまま検査できます。`script.js`と`js/*.js`はES modulesで、`index.html`から`<script type="module" src="script.js">`で読み込みます。
 
 ---
 
-## クリック判定システム
+## 照会と分類
 
-### ヒットテストアルゴリズム
-
-レーダーチャート上の点をクリック可能にするため、カスタムヒットテストを実装：
+`scanAll(env)`は、`PERMISSIONS`の順に`navigator.permissions.query(descriptor)`を呼びます。
 
 ```javascript
-// script.js:548-561
-canvas.addEventListener('click', (ev)=>{
-  const rect = canvas.getBoundingClientRect();
-  const x = ev.clientX - rect.left;  // Canvas内の相対座標
-  const y = ev.clientY - rect.top;
-
-  const hits = clickMaps[groupKey] || [];
-  let target = null, dmin = Infinity;
-
-  hits.forEach(p=>{
-    const d = Math.hypot(p.x - x, p.y - y);  // ユークリッド距離
-    if (d < p.r && d < dmin){
-      dmin = d;
-      target = p;  // もっとも近い点を選択
-    }
-  });
-});
-```
-
-**アルゴリズム**:
-1. クリック座標をCanvas相対座標に変換
-2. すべての点との距離を計算（`Math.hypot`使用）
-3. 閾値（30px）内でもっとも近い点を選択
-4. 該当点が見つかれば詳細タブへジャンプ
-
-### クリックマップの構造
-
-各カテゴリごとに点の座標を保存：
-
-```javascript
-// script.js:387
-const clickMaps = {
-  device: [{x: 180, y: 50, key: 'camera', r: 30}, ...],
-  data: [...],
-  comm: [...]
-};
-```
-
-**データ構造**:
-- `x, y`: Canvas上の座標
-- `key`: 権限のキー（例: 'camera'）
-- `r`: クリック判定の半径（30px）
-
-### タブ切り替えの同期処理
-
-点クリック時のタブ切り替えとスクロールを同期：
-
-```javascript
-// script.js:562-574
-if (target){
-  selectTab('details');  // タブ切り替え
-
-  // DOM更新を待つ
-  requestAnimationFrame(() => {
-    applyFilter(groupKey);  // フィルター適用
-    const row = document.getElementById(`perm-row-${target.key}`);
-    if (row){
-      row.scrollIntoView({behavior:'smooth', block:'center'});
-      row.classList.remove('highlight');
-      void row.offsetWidth;  // リフロー強制
-      row.classList.add('highlight');
-    }
+// js/scanner.js（要約）
+for (const p of PERMISSIONS) {
+  const q = await queryOne(env, p);            // { queryState, error, status }
+  const notification = p.key === 'notifications' ? readNotificationPermission(env) : null;
+  const { state, source } = classify({
+    queryState: q.queryState,                  // 照会できなければ null
+    featurePresent: !!features[p.feature],     // SyncManager・IdleDetector などの有無
+    notificationPermission: notification,      // 通知だけ
   });
 }
 ```
 
-**ポイント**:
-- `requestAnimationFrame`でDOM更新を待つ
-- `void row.offsetWidth`でリフローを強制し、CSSアニメーションを確実に動作させる
+`classify`の規則は次のとおりです。
+
+| 照会の結果 | 機能のAPI | 通知のNotification.permission | 表示する状態 | 出所 |
+|---|---|---|---|---|
+| granted／prompt／denied | 問わない | 問わない | 照会の値 | Permissions API |
+| 例外（TypeErrorなど） | 問わない | default／granted／denied | defaultはprompt、ほかはそのまま | Notification.permission |
+| 例外（TypeErrorなど） | ある | なし | unknown | 照会できない（例外の名前） |
+| 例外（TypeErrorなど） | ない | なし | unsupported | 機能のAPIがない |
+
+- `push`は`{ name: 'push', userVisibleOnly: true }`で照会します（Chromeはこれ以外を拒否します）
+- 照会できない権限を`prompt`と推測しません。Firefoxでは`clipboard-read`・`clipboard-write`が`unknown`、`background-sync`・`payment-handler`・`idle-detection`が`unsupported`になります
+- 通知は、照会の値とNotification.permissionが（defaultをpromptに直しても）食い違えば`mismatch`として詳細タブに注記します。Chromiumのheadless shellでは、照会が`prompt`、Notification.permissionが`denied`でした
 
 ---
 
-## ツールチップの動的配置アルゴリズム
+## スコア
 
-### スマート配置ロジック
+| 状態 | スコア |
+|---|---|
+| granted | 1.0 |
+| prompt | 0.5 |
+| denied | 0.1 |
+| unsupported | 0.0 |
+| unknown | なし（平均に入れない） |
 
-ツールチップが画面端で切れないよう、動的に配置を調整：
-
-```javascript
-// script.js:109-128
-function positionTooltip(target){
-  const rect = target.getBoundingClientRect();
-  const tipRect = tooltipEl.getBoundingClientRect();
-
-  // 基本位置: 右側
-  let left = rect.right + TOOLTIP_PADDING;
-
-  // 右側に収まらない場合 → 左側
-  if (left + tipRect.width + TOOLTIP_PADDING > window.innerWidth) {
-    left = rect.left - tipRect.width - TOOLTIP_PADDING;
-  }
-
-  // 左側にも収まらない場合 → 中央
-  if (left < TOOLTIP_PADDING) {
-    left = Math.max(TOOLTIP_PADDING, rect.left + (rect.width / 2) - (tipRect.width / 2));
-  }
-
-  // 垂直方向も同様に調整
-  let top = rect.top + (rect.height / 2) - (tipRect.height / 2);
-  const maxTop = window.innerHeight - TOOLTIP_PADDING - tipRect.height;
-  if (top < TOOLTIP_PADDING) top = TOOLTIP_PADDING;
-  if (top > maxTop) top = maxTop;
-}
-```
-
-**配置優先順位**:
-1. 右側 (デフォルト)
-2. 左側 (右側に収まらない場合)
-3. 中央 (両側に収まらない場合)
-
-### レイアウトの再計算タイミング
-
-```javascript
-// script.js:131-147
-requestAnimationFrame(() => {
-  if (activeTooltipTarget !== target) return;
-  tooltipEl.getBoundingClientRect();  // レイアウト強制
-  positionTooltip(target);
-  tooltipEl.style.visibility = 'visible';
-});
-```
-
-**ポイント**:
-- `visibility: hidden`で一旦非表示にし、サイズ計算
-- `requestAnimationFrame`で次のフレームで位置を確定
-- ちらつき防止
+`groupScore(states)`は、スコアを持つ状態だけの平均を返し、1つもなければ`null`（画面では「—」）にします。画面には「4件中n件で計算」と、平均に使えた件数を出します。表示は`formatScore`（`toFixed(2)`）です。
 
 ---
 
-## 権限スキャンとフォールバック機構
+## ライブ更新
 
-### Permissions API の互換性処理
-
-ブラウザーごとに対応状況が異なるため、複数段階のフォールバック機構を実装：
+照会で得た`PermissionStatus`に`change`のリスナーを付けます。
 
 ```javascript
-// script.js:259-289
-async function scanAllPermissions() {
-  const results = [];
-  for (const p of PERMS) {
-    // 1. Permissions API を試行
-    let res = await queryPermission(p.descriptor);
-
-    // 2. notifications は Notification.permission を優先
-    if (p.key === 'notifications' && 'Notification' in window) {
-      res = { state: Notification.permission };
-    }
-    // 3. unsupported ならフォールバック
-    else if (res.state === 'unsupported') {
-      res = await featureFallback(p.key);
-    }
-
-    results.push({ key: p.key, state: res.state });
-  }
-  return results;
-}
-```
-
-### フォールバック検出ロジック
-
-API未対応時の代替検出方法：
-
-```javascript
-// script.js:242-257
-async function featureFallback(key) {
-  switch (key) {
-    case 'notifications':
-      // Notification オブジェクトの存在チェック
-      if (!('Notification' in window)) return { state: 'unsupported' };
-      return { state: Notification.permission };
-
-    case 'geolocation':
-      // navigator.geolocation の存在チェック
-      return ('geolocation' in navigator)
-        ? { state: 'prompt' }
-        : { state: 'unsupported' };
-
-    case 'camera':
-    case 'microphone':
-      // getUserMedia の存在チェック
-      return (navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
-        ? { state: 'prompt' }
-        : { state: 'unsupported' };
+// script.js（要約）
+function watch(results) {
+  unwatch();                                   // 前回のリスナーを外す
+  for (const r of results) {
+    if (!r.status) continue;
+    const handler = () => rescan({ quiet: true, fromChange: true });
+    r.status.addEventListener('change', handler);
+    watched.push({ status: r.status, handler });
   }
 }
 ```
 
-**フォールバック戦略**:
-1. Permissions API（標準）
-2. 個別API（Notification.permission等）
-3. オブジェクト存在チェック
-4. unsupported判定
+- 照会し直すたびに、前回の結果との差分（`diffResults`）をログに出します
+- `rescan`は同時に走らせません。走っている間に来た要求は、終わったあとに1回だけ実行します（変更の通知がまとめて届いても、照会は2回で済む）
+- Safariは`change`が発火しないため、テストのあとの照会し直しと「Rescan All」で追います
+
+---
+
+## レーダーの描画（SVG）
+
+`viewBox="0 0 400 400"`のSVGに描きます。表示の大きさはCSSで決まり（最大420px）、拡大してもぼやけません。
+
+- 軸: 4軸のときは斜め（右上から時計回りに-45°・45°・135°・225°）に置き、ラベルを四隅に逃がします。それ以外は真上から時計回り
+- 点: 半径はスコアと同じ割合です。0の点が中心で重ならないよう、最小で半径の5%の位置に描きます（`displayRadius`）。照会できない点は破線の輪で描き、その軸のラベルも破線にします
+- ラベル: 軸の先端から外へ16離した点を基準に、軸の向きで箱の角か辺をそこへ合わせ、viewBoxの中に収めます（`labelBox`）。箱が点（外周のgrantedでも）に重ならないことをテストで確かめています
+- 選択: 点は`<g role="button" tabindex="0">`で、クリック・Enter・Spaceで詳細タブのその行へ移ります。画面の座標を測らないので、表示の幅が変わってもずれません。押せる範囲の半径は20（幅320pxの画面で約24px）です
+- 色はCSSのクラス（`state-granted`など）で付け、`style`属性は使いません
+
+---
+
+## 権限テストとBackground Sync
+
+`QUICK_TESTS`にボタンのidと処理を並べ、共通の処理で実行します。
+
+- 実行中はボタンを`disabled`にして、連打で二重に要求しません
+- 終わったら照会し直します（`change`が届かないブラウザーのため）
+- カメラ・マイクは`getUserMedia()`のあとすぐ`stop()`、位置情報の座標とクリップボードの内容はログに出しません
+
+Background Syncは、`navigator.serviceWorker.ready`を待つと、登録がないときに永遠に解決しません。
+
+```javascript
+// script.js（要約）
+if (!('SyncManager' in window)) return log(t('log.sync.nosync'));   // Firefox・Safari は登録しない
+const registration = await waitActive(await navigator.serviceWorker.register('sw.js')); // 5秒で打ち切る
+await registration.sync.register('bpr-test-sync');
+```
+
+`sw.js`は`install`・`activate`・`sync`だけを受け取り、`fetch`を横取りせず、通信もしません。「Cleanup」は`getRegistrations()`の登録をすべて`unregister()`します。
+
+---
+
+## ツールチップ・タブ・アコーディオン
+
+- 「?」は`<button>`です。マウスを乗せる・フォーカスで開き、押すと固定し、もう一度押すかEscで閉じます。開いている間は`aria-expanded="true"`と`aria-describedby`（`role="tooltip"`の要素）を付けます
+- ツールチップは画面の右に出し、収まらなければ左、それでも収まらなければ中央に置きます（`positionTooltip`）
+- タブは`role="tablist"`・`tab`・`tabpanel`で、矢印キー・Home・Endで移ります。隠すパネルは`hidden`属性です
+- アコーディオンは`aria-expanded`を切り替えます。閉じた中身は`visibility:hidden`（閉じ終わってから）にして、Tabキーで中のリンクに入らないようにします
 
 ---
 
 ## セキュリティ対策の実装
 
-### XSS対策: HTMLエスケープ
-
-すべての動的コンテンツをエスケープ：
-
-```javascript
-// script.js:205-215
-function escapeHtml(text) {
-  if (!text) return '';
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return String(text).replace(/[&<>"']/g, m => map[m]);
-}
-```
-
-**適用箇所**:
-- テーブルレンダリング（script.js:327-345）
-- data-tooltip属性（script.js:338）
-
-### クリックジャッキング対策: Frame-busting
-
-meta X-Frame-Optionsが機能しないため、JavaScriptで実装：
-
-```javascript
-// script.js:21-23
-if (window.top !== window.self) {
-  window.top.location = window.self.location;
-}
-```
-
-**動作**:
-- iframeに埋め込まれた場合、親フレームのURLを変更
-- クリックジャッキング攻撃を防止
-
-### Content Security Policy
-
-metaタグで設定（機能する範囲のみ）：
-
-```html
-<!-- index.html:9 -->
-<meta http-equiv="Content-Security-Policy"
-      content="default-src 'self';
-               script-src 'self';
-               style-src 'self' 'unsafe-inline';
-               img-src 'self' data:;
-               font-src 'self';
-               connect-src 'none';
-               base-uri 'self';
-               form-action 'none';">
-```
-
-**制限内容**:
-- 外部スクリプト・スタイル禁止
-- データ送信禁止（`connect-src 'none'`）
-- フォーム送信禁止
-
-### プライバシー保護: 機密情報の非表示
-
-位置情報やクリップボード内容を非表示：
-
-```javascript
-// script.js:631
-log(`Geolocation OK: Permission granted (coordinates hidden for privacy)`);
-
-// script.js:663
-log(`Clipboard read OK: Permission granted (content hidden for privacy)`);
-```
+- CSP（metaタグ）: `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; worker-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'`。ツールチップの位置はCSSOM（`element.style.left`）で入れるので、`'unsafe-inline'`は要りません
+- 表は`createElement`と`textContent`で組み立て、`innerHTML`を使いません
+- 埋め込み: `frame-ancestors`と`X-Frame-Options`はmetaタグでは効かず、GitHub Pagesではヘッダーを設定できません。JavaScriptで親のページを移動させる方法は、Chromium系ではSecurityErrorになり画面全体が止まるため使いません。埋め込まれていれば案内を出します
+- 外部リンクは`target="_blank" rel="noopener noreferrer"`、ページ全体は`<meta name="referrer" content="no-referrer">`
 
 ---
 
-## アコーディオンアニメーション
+## テスト
 
-### スムーズな開閉アニメーション
+`npm test`（`node --test`、依存なし）で次を検査します。
 
-CSS transitionとmax-heightを使用：
-
-```css
-/* style.css:515-526 */
-.accordion-content{
-  max-height:0;
-  overflow:hidden;
-  transition:max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-             padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  padding:0 20px;
-}
-
-.accordion-content.active{
-  max-height:2000px;  /* 十分大きな値 */
-  padding:20px;
-  transition:max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-             padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-```
-
-**工夫点**:
-- 開く時: 0.5秒（ゆっくり）
-- 閉じる時: 0.4秒（やや速く）
-- イージング関数: Material Designの標準`cubic-bezier(0.4, 0, 0.2, 1)`
-- パディングも同期してアニメーション
-
-### max-heightの選定理由
-
-`max-height`を使用する理由：
-
-1. **height: auto は transition 不可**
-   - `height: 0` → `height: auto`はアニメーションできない
-
-2. **max-height で代替**
-   - `max-height: 0` → `max-height: 2000px`ならアニメーション可能
-   - 2000pxは実際のコンテンツ高さより大きい値
-
-3. **デメリットと対策**
-   - コンテンツが短い場合、アニメーション時間が不自然になる
-   - → 実際のコンテンツ高さに近い値（2000px）を設定して軽減
-
----
-
-## パフォーマンス最適化
-
-### レンダリング最適化
-
-```javascript
-// script.js:562-574
-requestAnimationFrame(() => {
-  applyFilter(groupKey);
-  const row = document.getElementById(`perm-row-${target.key}`);
-  if (row){
-    row.scrollIntoView({behavior:'smooth', block:'center'});
-    row.classList.remove('highlight');
-    void row.offsetWidth;  // リフローを1回に集約
-    row.classList.add('highlight');
-  }
-});
-```
-
-**最適化ポイント**:
-- DOM操作を`requestAnimationFrame`内にまとめる
-- リフローを最小限に抑える
-
-### イベント委譲
-
-ツールチップは動的に追加されるため、イベント委譲を使用：
-
-```javascript
-// script.js:143-156
-function attachTooltipHandlers(root = document){
-  root.querySelectorAll('.help-icon, .help-icon-small').forEach(icon => {
-    if (icon.dataset.tooltipBound) return;  // 重複防止
-    icon.dataset.tooltipBound = '1';
-    icon.addEventListener('mouseenter', showTooltip);
-    icon.addEventListener('focus', showTooltip);
-    icon.addEventListener('mouseleave', hideTooltip);
-    icon.addEventListener('blur', hideTooltip);
-  });
-}
-```
-
----
-
-## まとめ
-
-本ツールの技術的特徴：
-
-1. **Canvas描画の最適化**: 描画順序による視認性向上
-2. **高精度クリック判定**: ユークリッド距離とヒットテスト
-3. **スマートツールチップ**: 画面端での自動配置調整
-4. **多段階フォールバック**: ブラウザー互換性の確保
-5. **多層セキュリティ**: XSS、クリックジャッキング、CSP
-6. **Material Design準拠**: アニメーションイージング
-
-これらの実装により、教育目的のツールとして高い品質と安全性を両立しています。
+- `perm-core.test.js`: 分類・通知の正規化・スコアの表と平均・Edgeの実測の再現
+- `scanner.test.js`: 偽のブラウザーで照会（Firefoxの実測の再現、descriptorの候補、Permissions APIのないブラウザー）
+- `radar-geom.test.js`: 軸の角度・点の座標・ラベルが点と互いに重ならないこと・押せる範囲の大きさ
+- `messages.test.js`: `script.js`が引く文言が辞書にあること
+- `html.test.js`: CSP・ARIA・ボタンの種類・外部リンク・使うidの有無
+- `contrast.test.js`: 文字と下地の組が4.5:1以上（半透明の下地は重ねてから計算）
+- `format.test.js`: 行の長さ・改行・見えない文字
+- `readme.test.js`: READMEの構成・数値（実測の記録から計算し直す）・表記・ディレクトリー構造
 
 ---
 
 ## 関連リソース
 
 - [README.md](README.md) - プロジェクト概要
-- [PERMISSIONS_API.md](PERMISSIONS_API.md) - Permissions API技術仕様
-- [CLAUDE.md](CLAUDE.md) - Claude Code向けプロジェクト情報
+- [PERMISSIONS_API.md](PERMISSIONS_API.md) - Permissions APIの仕様と対応状況
+- [CLAUDE.md](CLAUDE.md) - Claude Code向けの説明

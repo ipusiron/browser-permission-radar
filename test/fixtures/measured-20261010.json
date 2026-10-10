@@ -1,0 +1,85 @@
+{
+  "note": "2026-10-10 に Playwright 1.58 で公開ページを開いた直後の navigator.permissions.query() の生の結果（ERR は reject の例外名）。__notification は Notification.permission",
+  "features_absent": {
+    "firefox": [
+      "SyncManager",
+      "PaymentManager",
+      "IdleDetector"
+    ]
+  },
+  "edge": {
+    "geolocation": "prompt",
+    "camera": "prompt",
+    "microphone": "prompt",
+    "midi": "prompt",
+    "clipboard-read": "prompt",
+    "clipboard-write": "granted",
+    "persistent-storage": "prompt",
+    "background-sync": "granted",
+    "notifications": "prompt",
+    "push": "prompt",
+    "payment-handler": "granted",
+    "idle-detection": "prompt",
+    "__notification": "default"
+  },
+  "firefox": {
+    "geolocation": "prompt",
+    "camera": "prompt",
+    "microphone": "prompt",
+    "midi": "prompt",
+    "clipboard-read": "ERR TypeError",
+    "clipboard-write": "ERR TypeError",
+    "persistent-storage": "prompt",
+    "background-sync": "ERR TypeError",
+    "notifications": "prompt",
+    "push": "prompt",
+    "payment-handler": "ERR TypeError",
+    "idle-detection": "ERR TypeError",
+    "__notification": "default"
+  },
+  "chromium_headless_shell": {
+    "geolocation": "prompt",
+    "camera": "prompt",
+    "microphone": "prompt",
+    "midi": "prompt",
+    "clipboard-read": "prompt",
+    "clipboard-write": "prompt",
+    "persistent-storage": "prompt",
+    "background-sync": "prompt",
+    "notifications": "prompt",
+    "push": "prompt",
+    "payment-handler": "prompt",
+    "idle-detection": "prompt",
+    "__notification": "denied"
+  },
+  "edge_iframe_no_allow": {
+    "geolocation": "denied",
+    "camera": "denied",
+    "microphone": "denied",
+    "midi": "denied",
+    "clipboard-read": "denied",
+    "clipboard-write": "denied",
+    "persistent-storage": "prompt",
+    "background-sync": "granted",
+    "notifications": "denied",
+    "push": "denied",
+    "payment-handler": "granted",
+    "idle-detection": "denied",
+    "__notification": "denied"
+  },
+  "edge_iframe_allow": {
+    "geolocation": "prompt",
+    "camera": "prompt",
+    "microphone": "prompt",
+    "midi": "prompt",
+    "clipboard-read": "prompt",
+    "clipboard-write": "granted",
+    "persistent-storage": "prompt",
+    "background-sync": "granted",
+    "notifications": "denied",
+    "push": "denied",
+    "payment-handler": "granted",
+    "idle-detection": "prompt",
+    "__notification": "denied"
+  }
+}
