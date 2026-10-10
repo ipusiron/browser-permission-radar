@@ -29,6 +29,7 @@
     <div class="tabs" role="tablist" aria-label="表示の切り替え">
       <button type="button" id="tab-radar" data-tab="radar" class="tab active" role="tab" aria-selected="true" aria-controls="radar">レーダー</button>
       <button type="button" id="tab-details" data-tab="details" class="tab" role="tab" aria-selected="false" aria-controls="details" tabindex="-1">詳細</button>
+      <button type="button" id="tab-compare" data-tab="compare" class="tab" role="tab" aria-selected="false" aria-controls="compare" tabindex="-1">比較</button>
       <button type="button" id="tab-policy" data-tab="policy" class="tab" role="tab" aria-selected="false" aria-controls="policy" tabindex="-1">埋め込み</button>
       <button type="button" id="tab-learn" data-tab="learn" class="tab" role="tab" aria-selected="false" aria-controls="learn" tabindex="-1">座学</button>
     </div>
@@ -188,6 +189,55 @@
         </div>
         <p class="muted">照会できない権限は<code>unknown</code>、機能のAPIがないものは<code>unsupported</code>と表示します。「出所」は、状態をどこから読んだかです。</p>
         <div id="permTableWrap" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- 尋ねずに読める情報と比較 -->
+    <section id="compare" class="panel" role="tabpanel" aria-labelledby="tab-compare" hidden>
+      <div class="card">
+        <h3>サイトが尋ねずに読める情報</h3>
+        <p id="exposureText" class="exposure-text"></p>
+        <p class="muted small">この組み合わせの要約値（SHA-256の先頭16桁）</p>
+        <pre id="sigHash" class="policy-allow"></pre>
+        <details class="sig-details">
+          <summary>組み合わせの全文</summary>
+          <pre id="sigText" class="policy-allow"></pre>
+        </details>
+        <p class="muted">
+          同じブラウザー・同じ設定なら同じ値になり、許可や拒否を1つ変えると値が変わります。
+          既定から変えた権限が多いほど、あなたのブラウザーは目立ちます。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>既定や別の結果と比べる</h3>
+        <div class="compare-controls">
+          <label class="field">
+            <span>比べる既定（新しいプロファイルで開いた直後の状態。Windowsで2026-10-10に実測。版やOSで変わることがあります）</span>
+            <select id="baselineSelect">
+              <option value="">選ばない</option>
+              <option value="edge">Edge 155（新しいプロファイル・2026-10-10）</option>
+              <option value="firefox">Firefox 146（新しいプロファイル・2026-10-10）</option>
+            </select>
+          </label>
+          <p id="baselineChanges" class="baseline-changes" role="status" aria-live="polite"></p>
+          <label class="field">
+            <span>書き出す結果の名前（任意、40文字まで）</span>
+            <input type="text" id="exportLabel" maxlength="40" autocomplete="off">
+          </label>
+          <div class="row">
+            <button type="button" id="exportBtn" class="rescan-btn">⬇ JSONで書き出す</button>
+          </div>
+          <label class="field">
+            <span>書き出したJSONを読み込んで並べる（4件まで、ファイルはブラウザーの中だけで読む）</span>
+            <input type="file" id="importFile" accept="application/json,.json" multiple>
+          </label>
+          <div class="row">
+            <button type="button" id="importClear" class="chip">読み込んだ結果を消す</button>
+          </div>
+          <p id="importStatus" class="muted" role="status" aria-live="polite"></p>
+        </div>
+        <div id="compareTableWrap" class="table-wrap"></div>
       </div>
     </section>
 

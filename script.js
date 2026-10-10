@@ -13,6 +13,10 @@ import { GROUPS, GROUP_ORDER, summarize, formatScore } from './js/perm-core.js';
 import { scanAll, diffResults } from './js/scanner.js';
 import { renderRadar } from './js/radar-svg.js';
 import { POLICY_FEATURES, buildAllow, parseProbeMessage, compareResults, summarizeComparison } from './js/policy-core.js';
+import {
+  BASELINES, MAX_IMPORT_BYTES, signature, exposure, guessBaseline, buildExport, cleanLabel, fileStamp, parseImport,
+  compareColumns, changedFromBaseline,
+} from './js/compare-core.js';
 import { t } from './js/i18n.js';
 
 (() => {
@@ -587,6 +591,8 @@ import { t } from './js/i18n.js';
     lastResults = results.slice();
     for (const g of GROUP_ORDER) drawRadarGroup(g, results);
     renderTable(results);
+    updateCompare();
+    if (policyLast) showPolicyResult();
     watch(results);
     return results;
   }
@@ -612,6 +618,121 @@ import { t } from './js/i18n.js';
     return run.promise;
   }
 
+
+  // ========================================
+  // 尋ねずに読める情報と比較（比較タブ）
+  // ========================================
+  const exposureText = document.getElementById('exposureText');
+  const sigHashEl = document.getElementById('sigHash');
+  const sigTextEl = document.getElementById('sigText');
+  const baselineSelect = document.getElementById('baselineSelect');
+  const baselineChanges = document.getElementById('baselineChanges');
+  const exportLabel = document.getElementById('exportLabel');
+  const importFile = document.getElementById('importFile');
+  const importStatus = document.getElementById('importStatus');
+  const compareTableWrap = document.getElementById('compareTableWrap');
+  const MAX_IMPORTS = 4;
+  let imported = [];  // {label, states}
+
+  async function sha256Hex(text) {
+    if (!(window.crypto && window.crypto.subtle)) return null;
+    const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function renderCompareTable() {
+    const base = baselineSelect.value ? BASELINES[baselineSelect.value] : null;
+    const others = [...(base ? [{ label: base.label, states: base.states }] : []), ...imported];
+    const rows = compareColumns(lastResults, others);
+    const table = document.createElement('table');
+    const hr = table.createTHead().insertRow();
+    const heads = [t('table.permission'), t('compare.now'), ...others.map(o => o.label)];
+    for (const h of heads) {
+      const th = document.createElement('th');
+      th.scope = 'col';
+      th.textContent = h;
+      hr.appendChild(th);
+    }
+    const tbody = table.createTBody();
+    for (const r of rows) {
+      const tr = tbody.insertRow();
+      if (r.differs) tr.className = 'changed';
+      const code = document.createElement('code');
+      code.textContent = r.key;
+      tr.insertCell().appendChild(code);
+      tr.insertCell().appendChild(badgeEl(r.current));
+      for (const v of r.others) {
+        const cell = tr.insertCell();
+        if (v === '—') cell.textContent = v;
+        else cell.appendChild(badgeEl(v));
+      }
+      [...tr.cells].forEach((cell, i) => { cell.dataset.label = heads[i]; });
+    }
+    compareTableWrap.replaceChildren(table);
+  }
+
+  async function updateCompare() {
+    const e = exposure(lastResults);
+    exposureText.textContent = t('compare.exposure', e);
+    const sig = signature(lastResults);
+    sigTextEl.textContent = sig.split(';').join('\n');
+    const hex = await sha256Hex(sig);
+    sigHashEl.textContent = hex ? hex.slice(0, 16) : t('compare.hashUnavailable');
+
+    const base = baselineSelect.value ? BASELINES[baselineSelect.value] : null;
+    if (!base) {
+      baselineChanges.textContent = t('compare.noBaseline');
+    } else {
+      const ch = changedFromBaseline(lastResults, base.states);
+      baselineChanges.textContent = ch.length
+        ? t('compare.changes', { list: ch.map(c => t('compare.change', c)).join(t('list.sep')) })
+        : t('compare.noChanges');
+    }
+    renderCompareTable();
+  }
+
+  baselineSelect.value = guessBaseline(navigator.userAgent) || '';
+  baselineSelect.addEventListener('change', () => updateCompare());
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const now = new Date();
+    const data = buildExport({ results: lastResults, label: exportLabel.value, takenAt: now.toISOString() });
+    const file = `browser-permission-radar-${fileStamp(now)}.json`;
+    // application/json にする（text/plain だと Chromium 系が .txt を足すことがある）
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    importStatus.textContent = t('compare.exported', { file });
+  });
+
+  importFile.addEventListener('change', async () => {
+    const files = [...importFile.files];
+    const messages = [];
+    let added = 0;
+    for (const f of files) {
+      const name = cleanLabel(f.name);
+      if (imported.length >= MAX_IMPORTS) { messages.push(t('compare.limit')); break; }
+      if (f.size > MAX_IMPORT_BYTES) { messages.push(t('compare.error', { name, reason: t('compare.error.size') })); continue; }
+      const res = parseImport(await f.text());
+      if (!res.ok) { messages.push(t('compare.error', { name, reason: t(`compare.error.${res.error}`) })); continue; }
+      imported.push({ label: res.data.label || name, states: res.data.states });
+      added += 1;
+    }
+    importFile.value = '';
+    importStatus.textContent = [t('compare.loaded', { n: added }), ...messages].join(' ');
+    updateCompare();
+  });
+
+  document.getElementById('importClear').addEventListener('click', () => {
+    imported = [];
+    importStatus.textContent = t('compare.cleared');
+    updateCompare();
+  });
 
   // ========================================
   // Permissions Policy の実験（埋め込みタブ）

@@ -763,3 +763,40 @@ td code{
   #policyTableWrap td::before{content:attr(data-label); color:var(--muted); font-size:12px}
   #policyTableWrap td > *{justify-self:start}
 }
+
+/* ========================================
+   比較タブ
+   ======================================== */
+.exposure-text{font-size:15px; line-height:1.7; color:var(--text); font-family:sans-serif}
+.sig-details{margin:8px 0}
+.sig-details summary{cursor:pointer; color:var(--accent); min-height:44px; display:flex; align-items:center}
+.sig-details summary::before{content:'▶'; margin-right:8px; font-size:11px}
+.sig-details[open] summary::before{content:'▼'}
+.compare-controls{display:grid; grid-template-columns:minmax(0, 1fr); gap:12px; margin-bottom:12px}
+.field{display:grid; grid-template-columns:minmax(0, 1fr); gap:6px; font-size:13px; color:var(--muted); font-family:sans-serif}
+.field select,
+.field input[type="text"]{
+  font-size:16px;
+  min-height:44px;
+  padding:8px 10px;
+  background:var(--bg);
+  color:var(--text);
+  border:1px solid var(--accent);
+  max-width:100%;
+  width:100%;
+  min-width:0;
+}
+.field input[type="file"]{font-size:14px; color:var(--text); max-width:100%; min-height:44px}
+.baseline-changes{color:var(--text); font-family:sans-serif; overflow-wrap:anywhere}
+#compareTableWrap tr.changed td{background:rgba(255,215,0,0.06)}
+@media (max-width: 560px){
+  #compareTableWrap table,
+  #compareTableWrap tbody,
+  #compareTableWrap tr,
+  #compareTableWrap td{display:block; width:100%}
+  #compareTableWrap thead{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0)}
+  #compareTableWrap tr{border-bottom:1px solid var(--border); padding:8px 0}
+  #compareTableWrap td{border:0; padding:4px; display:grid; grid-template-columns:8em minmax(0, 1fr); gap:8px; align-items:center}
+  #compareTableWrap td::before{content:attr(data-label); color:var(--muted); font-size:12px; overflow-wrap:anywhere}
+  #compareTableWrap td > *{justify-self:start}
+}

@@ -92,7 +92,10 @@ test('画面が使う id がそろっている', () => {
     'measured-data', 'measured-comm', 'scoreLink-device', 'scoreLink-data', 'scoreLink-comm', 'permTableWrap', 'log',
     'rescanBtn', 'askNotif', 'getGeo', 'getCamera', 'getMic', 'readClip', 'writeClip', 'getMIDI', 'askPersist',
     'askIdle', 'askWakeLock', 'askFonts', 'askScreens', 'testBgSync', 'cleanupSW', 'radar-status-device', 'radar-status-data',
-    'radar-status-comm', 'radarExtra', 'score-extra', 'measured-extra', 'scoreLink-extra', 'radar-status-extra'];
+    'radar-status-comm', 'radarExtra', 'score-extra', 'measured-extra', 'scoreLink-extra', 'radar-status-extra',
+    'policyChecks', 'policyAll', 'policyNone', 'policyRun', 'policyAllow', 'policyFrameWrap', 'policySummary', 'policyTableWrap',
+    'exposureText', 'sigHash', 'sigText', 'baselineSelect', 'baselineChanges', 'exportLabel', 'exportBtn', 'importFile',
+    'importClear', 'importStatus', 'compareTableWrap'];
   for (const id of ids) assert.equal([...html.matchAll(new RegExp(`id="${id}"`, 'g'))].length, 1, id);
 });
 
