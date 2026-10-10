@@ -16,22 +16,21 @@
 </head>
 <body>
   <header class="topbar">
+    <button type="button" id="langToggle" class="lang-toggle" data-i18n="ui.lang.button" data-i18n-attr="aria-label:ui.lang.aria" aria-label="表示の言語を英語にする">English</button>
     <h1>Browser Permission Radar</h1>
-    <p class="subtitle">このページに対するブラウザーの権限（位置情報・カメラ・マイク・通知・クリップボードなど）を、レーダーとスコアで可視化します</p>
+    <p class="subtitle" data-i18n="ui.subtitle">このページに対するブラウザーの権限（位置情報・カメラ・マイク・通知・クリップボードなど）を、レーダーとスコアで可視化します</p>
   </header>
 
   <main class="container">
-    <div id="frameNotice" class="notice" role="note" hidden>
-      このページは別のページに埋め込まれて（iframeの中で）開かれています。埋め込み元のPermissions Policyで許されていない権限は、尋ねられずにdeniedになります。単独のタブで開くと、このサイトに対する状態が見えます。
-    </div>
+    <div id="frameNotice" class="notice" role="note" data-i18n="ui.frameNotice" hidden>このページは別のページに埋め込まれて（iframeの中で）開かれています。埋め込み元のPermissions Policyで許されていない権限は、尋ねられずにdeniedになります。単独のタブで開くと、このサイトに対する状態が見えます。</div>
     <noscript><p class="notice">このツールはJavaScriptで権限を照会します。JavaScriptを有効にしてください。</p></noscript>
 
-    <div class="tabs" role="tablist" aria-label="表示の切り替え">
-      <button type="button" id="tab-radar" data-tab="radar" class="tab active" role="tab" aria-selected="true" aria-controls="radar">レーダー</button>
-      <button type="button" id="tab-details" data-tab="details" class="tab" role="tab" aria-selected="false" aria-controls="details" tabindex="-1">詳細</button>
-      <button type="button" id="tab-compare" data-tab="compare" class="tab" role="tab" aria-selected="false" aria-controls="compare" tabindex="-1">比較</button>
-      <button type="button" id="tab-policy" data-tab="policy" class="tab" role="tab" aria-selected="false" aria-controls="policy" tabindex="-1">埋め込み</button>
-      <button type="button" id="tab-learn" data-tab="learn" class="tab" role="tab" aria-selected="false" aria-controls="learn" tabindex="-1">座学</button>
+    <div class="tabs" role="tablist" aria-label="表示の切り替え" data-i18n-attr="aria-label:ui.tabs.aria">
+      <button type="button" id="tab-radar" data-tab="radar" class="tab active" role="tab" aria-selected="true" aria-controls="radar" data-i18n="ui.tab.radar">レーダー</button>
+      <button type="button" id="tab-details" data-tab="details" class="tab" role="tab" aria-selected="false" aria-controls="details" tabindex="-1" data-i18n="ui.tab.details">詳細</button>
+      <button type="button" id="tab-compare" data-tab="compare" class="tab" role="tab" aria-selected="false" aria-controls="compare" tabindex="-1" data-i18n="ui.tab.compare">比較</button>
+      <button type="button" id="tab-policy" data-tab="policy" class="tab" role="tab" aria-selected="false" aria-controls="policy" tabindex="-1" data-i18n="ui.tab.policy">埋め込み</button>
+      <button type="button" id="tab-learn" data-tab="learn" class="tab" role="tab" aria-selected="false" aria-controls="learn" tabindex="-1" data-i18n="ui.tab.learn">座学</button>
     </div>
 
     <!-- Global Legend -->
@@ -42,7 +41,8 @@
         <span class="legend-item"><span class="legend-dot denied"></span>denied</span>
         <span class="legend-item"><span class="legend-dot unknown"></span>unknown</span>
         <span class="legend-item"><span class="legend-dot unsupported"></span>unsupported</span>
-        <button type="button" class="help-icon" data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定（使う前に尋ねられる）&#10;denied=拒否済み&#10;unknown=機能はあるが、このブラウザーでは照会できない&#10;unsupported=機能のAPIがない" aria-label="説明">?</button>
+        <button type="button" class="help-icon" data-i18n-attr="aria-label:ui.help.aria;data-tooltip:ui.tip.legend"
+          data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定（使う前に尋ねられる）&#10;denied=拒否済み&#10;unknown=機能はあるが、このブラウザーでは照会できない&#10;unsupported=機能のAPIがない" aria-label="説明">?</button>
       </div>
     </div>
 
@@ -51,120 +51,120 @@
       <div class="grid-3">
         <div class="card">
           <h3 class="group-title">
-            デバイスアクセス系
-            <button type="button" class="help-icon" data-tooltip="カメラ、マイク、位置情報、MIDI機器など&#10;物理デバイスへのアクセス権限を示します。&#10;&#10;リスク: 盗撮・盗聴・位置特定" aria-label="説明">?</button>
-            <button type="button" id="scoreLink-device" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-device">-</span></button>
+            <span data-i18n="group.device">デバイスアクセス系</span>
+            <button type="button" class="help-icon" data-i18n-attr="aria-label:ui.help.aria;data-tooltip:ui.tip.device" data-tooltip="カメラ・マイク・位置情報・MIDI機器など、物理的な機器へのアクセスの権限です。&#10;&#10;リスク: 盗撮・盗聴・居場所の特定" aria-label="説明">?</button>
+            <button type="button" id="scoreLink-device" class="score-link" title="詳細タブでこのカテゴリに絞り込む" data-i18n-attr="title:ui.score.title">Score: <span id="score-device">-</span></button>
           </h3>
           <p class="muted small">geolocation / camera / microphone / midi</p>
           <p class="muted tiny score-measured" id="measured-device"></p>
-          <svg id="radarDevice" class="radar" viewBox="0 0 400 400" role="group" aria-label="デバイスアクセス系のレーダー"></svg>
+          <svg id="radarDevice" class="radar" viewBox="0 0 400 400" role="group" aria-label="デバイスアクセス系のレーダー" data-i18n-attr="aria-label:ui.radar.aria.device"></svg>
           <div role="status" aria-live="polite" id="radar-status-device" class="sr-only"></div>
-          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
+          <p class="muted tiny" data-i18n="ui.radar.hint">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
 
         <div class="card">
           <h3 class="group-title">
-            データアクセス系
-            <button type="button" class="help-icon" data-tooltip="クリップボード、永続ストレージ、&#10;バックグラウンド同期など、&#10;ユーザーデータの読み書きに関する権限です。&#10;&#10;リスク: パスワード窃取・トラッキング" aria-label="説明">?</button>
-            <button type="button" id="scoreLink-data" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-data">-</span></button>
+            <span data-i18n="group.data">データアクセス系</span>
+            <button type="button" class="help-icon" data-i18n-attr="aria-label:ui.help.aria;data-tooltip:ui.tip.data" data-tooltip="クリップボード・永続ストレージ・バックグラウンド同期など、データの読み書きと保存の権限です。&#10;&#10;リスク: パスワードの窃取・ClickFix・追跡" aria-label="説明">?</button>
+            <button type="button" id="scoreLink-data" class="score-link" title="詳細タブでこのカテゴリに絞り込む" data-i18n-attr="title:ui.score.title">Score: <span id="score-data">-</span></button>
           </h3>
           <p class="muted small">clipboard-read / clipboard-write / persistent-storage / background-sync</p>
           <p class="muted tiny score-measured" id="measured-data"></p>
-          <svg id="radarData" class="radar" viewBox="0 0 400 400" role="group" aria-label="データアクセス系のレーダー"></svg>
+          <svg id="radarData" class="radar" viewBox="0 0 400 400" role="group" aria-label="データアクセス系のレーダー" data-i18n-attr="aria-label:ui.radar.aria.data"></svg>
           <div role="status" aria-live="polite" id="radar-status-data" class="sr-only"></div>
-          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
+          <p class="muted tiny" data-i18n="ui.radar.hint">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
 
         <div class="card">
           <h3 class="group-title">
-            通信・通知系
-            <button type="button" class="help-icon" data-tooltip="プッシュ通知、決済処理、アイドル検知など、&#10;ユーザーへの通信・通知機能に関する権限です。&#10;&#10;リスク: スパム・フィッシング誘導・&#10;不正決済・行動監視" aria-label="説明">?</button>
-            <button type="button" id="scoreLink-comm" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-comm">-</span></button>
+            <span data-i18n="group.comm">通信・通知系</span>
+            <button type="button" class="help-icon" data-i18n-attr="aria-label:ui.help.aria;data-tooltip:ui.tip.comm" data-tooltip="通知・プッシュ・決済・アイドル検出など、通信と通知の権限です。&#10;&#10;リスク: フィッシングへの誘導・不正な決済・在席の監視" aria-label="説明">?</button>
+            <button type="button" id="scoreLink-comm" class="score-link" title="詳細タブでこのカテゴリに絞り込む" data-i18n-attr="title:ui.score.title">Score: <span id="score-comm">-</span></button>
           </h3>
           <p class="muted small">notifications / push / payment-handler / idle-detection</p>
           <p class="muted tiny score-measured" id="measured-comm"></p>
-          <svg id="radarComm" class="radar" viewBox="0 0 400 400" role="group" aria-label="通信・通知系のレーダー"></svg>
+          <svg id="radarComm" class="radar" viewBox="0 0 400 400" role="group" aria-label="通信・通知系のレーダー" data-i18n-attr="aria-label:ui.radar.aria.comm"></svg>
           <div role="status" aria-live="polite" id="radar-status-comm" class="sr-only"></div>
-          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
+          <p class="muted tiny" data-i18n="ui.radar.hint">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
         <div class="card">
           <h3 class="group-title">
-            画面・ネットワーク・センサー系
-            <button type="button" class="help-icon" aria-label="説明"
+            <span data-i18n="group.extra">画面・ネットワーク・センサー系</span>
+            <button type="button" class="help-icon" data-i18n-attr="aria-label:ui.help.aria;data-tooltip:ui.tip.extra" aria-label="説明"
               data-tooltip="LANの中の機器への通信、埋め込みでのCookie、画面のロック止め、画面の配置、フォントの一覧、センサーなど、比較的新しい権限です。&#10;Chromium系で照会できるものが多く、Firefox・Safariでは照会できないものがあります。&#10;&#10;リスク: LANの探索・サイトをまたいだ追跡・ブラウザーを見分ける材料">?</button>
-            <button type="button" id="scoreLink-extra" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-extra">-</span></button>
+            <button type="button" id="scoreLink-extra" class="score-link" title="詳細タブでこのカテゴリに絞り込む" data-i18n-attr="title:ui.score.title">Score: <span id="score-extra">-</span></button>
           </h3>
           <p class="muted small">local-network / storage-access / screen-wake-lock / window-management / local-fonts / accelerometer</p>
           <p class="muted tiny score-measured" id="measured-extra"></p>
-          <svg id="radarExtra" class="radar" viewBox="0 0 400 400" role="group" aria-label="画面・ネットワーク・センサー系のレーダー"></svg>
+          <svg id="radarExtra" class="radar" viewBox="0 0 400 400" role="group" aria-label="画面・ネットワーク・センサー系のレーダー" data-i18n-attr="aria-label:ui.radar.aria.extra"></svg>
           <div role="status" aria-live="polite" id="radar-status-extra" class="sr-only"></div>
-          <p class="muted tiny">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
+          <p class="muted tiny" data-i18n="ui.radar.hint">※ 点を押すと「詳細」タブの該当する権限の行へ移ります（Tabキーで点を選び、Enterでも移れます）。</p>
         </div>
       </div>
 
       <div class="card">
         <div class="row space-between">
-          <h3>クイックテスト（安全な最小動作）
-            <button type="button" class="help-icon" data-tooltip="各権限を安全にテストできます。&#10;&#10;・カメラ・マイクは即座に停止&#10;・データ送信は一切なし&#10;・権限リクエストの動作を体験可能" aria-label="説明">?</button>
+          <h3><span data-i18n="ui.quick.title">クイックテスト（安全な最小動作）</span>
+            <button type="button" class="help-icon" data-i18n-attr="aria-label:ui.help.aria;data-tooltip:ui.tip.quick" data-tooltip="各権限を安全に試せます。&#10;&#10;・カメラ・マイクはすぐに止める&#10;・結果はどこにも送らない&#10;・ブラウザーの問い合わせを体験できる" aria-label="説明">?</button>
           </h3>
           <button type="button" id="rescanBtn" class="rescan-btn">🔄 Rescan All</button>
         </div>
         <div class="test-grid">
           <div class="test-item">
             <button type="button" id="askNotif" class="test-btn">🔔 Notifications</button>
-            <span class="test-desc">通知の許可をリクエスト</span>
+            <span class="test-desc" data-i18n="ui.test.askNotif">通知の許可をリクエスト</span>
           </div>
           <div class="test-item">
             <button type="button" id="getGeo" class="test-btn">📍 Geolocation</button>
-            <span class="test-desc">位置情報を1回取得</span>
+            <span class="test-desc" data-i18n="ui.test.getGeo">位置情報を1回取得</span>
           </div>
           <div class="test-item">
             <button type="button" id="getCamera" class="test-btn">📷 Camera</button>
-            <span class="test-desc">カメラのみ起動（即停止）</span>
+            <span class="test-desc" data-i18n="ui.test.getCamera">カメラのみ起動（即停止）</span>
           </div>
           <div class="test-item">
             <button type="button" id="getMic" class="test-btn">🎤 Microphone</button>
-            <span class="test-desc">マイクのみ起動（即停止）</span>
+            <span class="test-desc" data-i18n="ui.test.getMic">マイクのみ起動（即停止）</span>
           </div>
           <div class="test-item">
             <button type="button" id="readClip" class="test-btn">📋 Clipboard Read</button>
-            <span class="test-desc">クリップボードを読み取り</span>
+            <span class="test-desc" data-i18n="ui.test.readClip">クリップボードを読み取り</span>
           </div>
           <div class="test-item">
             <button type="button" id="writeClip" class="test-btn">✏️ Clipboard Write</button>
-            <span class="test-desc">'test' をクリップボードに書き込み</span>
+            <span class="test-desc" data-i18n="ui.test.writeClip">「test」をクリップボードに書き込み</span>
           </div>
           <div class="test-item">
             <button type="button" id="getMIDI" class="test-btn">🎹 MIDI</button>
-            <span class="test-desc">MIDI機器へのアクセスをリクエスト</span>
+            <span class="test-desc" data-i18n="ui.test.getMIDI">MIDI機器へのアクセスをリクエスト</span>
           </div>
           <div class="test-item">
             <button type="button" id="askPersist" class="test-btn">💾 Persistent Storage</button>
-            <span class="test-desc">永続ストレージをリクエスト</span>
+            <span class="test-desc" data-i18n="ui.test.askPersist">永続ストレージをリクエスト</span>
           </div>
           <div class="test-item">
             <button type="button" id="askIdle" class="test-btn">💤 Idle Detection</button>
-            <span class="test-desc">アイドル検出の許可をリクエスト</span>
+            <span class="test-desc" data-i18n="ui.test.askIdle">アイドル検出の許可をリクエスト</span>
           </div>
           <div class="test-item">
             <button type="button" id="askWakeLock" class="test-btn">💡 Screen Wake Lock</button>
-            <span class="test-desc">画面のロック止めを取得して、すぐに解放</span>
+            <span class="test-desc" data-i18n="ui.test.askWakeLock">画面のロック止めを取得して、すぐに解放</span>
           </div>
           <div class="test-item">
             <button type="button" id="askFonts" class="test-btn">🔤 Local Fonts</button>
-            <span class="test-desc">フォントの一覧の読み取りをリクエスト（件数だけ表示）</span>
+            <span class="test-desc" data-i18n="ui.test.askFonts">フォントの一覧の読み取りをリクエスト（件数だけ表示）</span>
           </div>
           <div class="test-item">
             <button type="button" id="askScreens" class="test-btn">🖥️ Window Management</button>
-            <span class="test-desc">画面の配置の読み取りをリクエスト（台数だけ表示）</span>
+            <span class="test-desc" data-i18n="ui.test.askScreens">画面の配置の読み取りをリクエスト（台数だけ表示）</span>
           </div>
           <div class="test-item">
             <button type="button" id="testBgSync" class="test-btn">🔄 Background Sync</button>
-            <span class="test-desc">押したときだけService Worker（sw.js、通信しない）を登録し、同期を登録</span>
+            <span class="test-desc" data-i18n="ui.test.testBgSync">押したときだけService Worker（sw.js、通信しない）を登録し、同期を登録</span>
           </div>
           <div class="test-item">
             <button type="button" id="cleanupSW" class="test-btn">🧹 Cleanup</button>
-            <span class="test-desc">このツールが登録したService Workerを解除（後片付け）</span>
+            <span class="test-desc" data-i18n="ui.test.cleanupSW">このツールが登録したService Workerを解除（後片付け）</span>
           </div>
         </div>
         <div id="log" class="log" role="log" aria-live="polite"></div>
@@ -176,10 +176,10 @@
       <div class="card">
         <div class="row space-between">
           <h3>Permission Status List
-            <button type="button" class="help-icon" data-tooltip="全権限の詳細一覧です。&#10;&#10;・カテゴリフィルターで絞り込み可能&#10;・権限名クリックでハイライト表示&#10;・?アイコンで詳細なリスク解説を表示" aria-label="説明">?</button>
+            <button type="button" class="help-icon" data-i18n-attr="aria-label:ui.help.aria;data-tooltip:ui.tip.details" data-tooltip="全権限の状態の一覧です。&#10;&#10;・カテゴリで絞り込める&#10;・権限名を押すと行をハイライトする&#10;・「?」で説明とリスクを表示する" aria-label="説明">?</button>
           </h3>
           <div class="filter-row">
-            <span class="muted small">カテゴリフィルター:</span>
+            <span class="muted small" data-i18n="ui.filter">カテゴリフィルター:</span>
             <button type="button" class="chip" data-filter="all">All</button>
             <button type="button" class="chip" data-filter="device">Device</button>
             <button type="button" class="chip" data-filter="data">Data</button>
@@ -187,7 +187,7 @@
             <button type="button" class="chip" data-filter="extra">Extra</button>
           </div>
         </div>
-        <p class="muted">照会できない権限は<code>unknown</code>、機能のAPIがないものは<code>unsupported</code>と表示します。「出所」は、状態をどこから読んだかです。</p>
+        <p class="muted" data-i18n-html="ui.details.note">照会できない権限は<code>unknown</code>、機能のAPIがないものは<code>unsupported</code>と表示します。「出所」は、状態をどこから読んだかです。</p>
         <div id="permTableWrap" class="table-wrap"></div>
       </div>
     </section>
@@ -195,45 +195,42 @@
     <!-- 尋ねずに読める情報と比較 -->
     <section id="compare" class="panel" role="tabpanel" aria-labelledby="tab-compare" hidden>
       <div class="card">
-        <h3>サイトが尋ねずに読める情報</h3>
+        <h3 data-i18n="ui.compare.title">サイトが尋ねずに読める情報</h3>
         <p id="exposureText" class="exposure-text"></p>
-        <p class="muted small">この組み合わせの要約値（SHA-256の先頭16桁）</p>
+        <p class="muted small" data-i18n="ui.compare.hash">この組み合わせの要約値（SHA-256の先頭16桁）</p>
         <pre id="sigHash" class="policy-allow"></pre>
         <details class="sig-details">
-          <summary>組み合わせの全文</summary>
+          <summary data-i18n="ui.compare.full">組み合わせの全文</summary>
           <pre id="sigText" class="policy-allow"></pre>
         </details>
-        <p class="muted">
-          同じブラウザー・同じ設定なら同じ値になり、許可や拒否を1つ変えると値が変わります。
-          既定から変えた権限が多いほど、あなたのブラウザーは目立ちます。
-        </p>
+        <p class="muted" data-i18n="ui.compare.explain">同じブラウザー・同じ設定なら同じ値になり、許可や拒否を1つ変えると値が変わります。既定から変えた権限が多いほど、あなたのブラウザーは目立ちます。</p>
       </div>
 
       <div class="card">
-        <h3>既定や別の結果と比べる</h3>
+        <h3 data-i18n="ui.compare.title2">既定や別の結果と比べる</h3>
         <div class="compare-controls">
           <label class="field">
-            <span>比べる既定（新しいプロファイルで開いた直後の状態。Windowsで2026-10-10に実測。版やOSで変わることがあります）</span>
+            <span data-i18n="ui.compare.baseline">比べる既定（新しいプロファイルで開いた直後の状態。Windowsで2026-10-10に実測。版やOSで変わることがあります）</span>
             <select id="baselineSelect">
-              <option value="">選ばない</option>
-              <option value="edge">Edge 155（新しいプロファイル・2026-10-10）</option>
-              <option value="firefox">Firefox 146（新しいプロファイル・2026-10-10）</option>
+              <option value="" data-i18n="ui.compare.none">選ばない</option>
+              <option value="edge" data-i18n="baseline.edge">Edge 155（新しいプロファイル・2026-10-10）</option>
+              <option value="firefox" data-i18n="baseline.firefox">Firefox 146（新しいプロファイル・2026-10-10）</option>
             </select>
           </label>
           <p id="baselineChanges" class="baseline-changes" role="status" aria-live="polite"></p>
           <label class="field">
-            <span>書き出す結果の名前（任意、40文字まで）</span>
+            <span data-i18n="ui.compare.label">書き出す結果の名前（任意、40文字まで）</span>
             <input type="text" id="exportLabel" maxlength="40" autocomplete="off">
           </label>
           <div class="row">
-            <button type="button" id="exportBtn" class="rescan-btn">⬇ JSONで書き出す</button>
+            <button type="button" id="exportBtn" class="rescan-btn" data-i18n="ui.compare.export">⬇ JSONで書き出す</button>
           </div>
           <label class="field">
-            <span>書き出したJSONを読み込んで並べる（4件まで、ファイルはブラウザーの中だけで読む）</span>
+            <span data-i18n="ui.compare.import">書き出したJSONを読み込んで並べる（4件まで、ファイルはブラウザーの中だけで読む）</span>
             <input type="file" id="importFile" accept="application/json,.json" multiple>
           </label>
           <div class="row">
-            <button type="button" id="importClear" class="chip">読み込んだ結果を消す</button>
+            <button type="button" id="importClear" class="chip" data-i18n="ui.compare.clear">読み込んだ結果を消す</button>
           </div>
           <p id="importStatus" class="muted" role="status" aria-live="polite"></p>
         </div>
@@ -244,187 +241,165 @@
     <!-- Permissions Policy の実験 -->
     <section id="policy" class="panel" role="tabpanel" aria-labelledby="tab-policy" hidden>
       <div class="card">
-        <h3>埋め込み（iframe）の実験：Permissions Policy</h3>
-        <p class="muted">
-          このツールの照会用のページ（probe.html）を、下のallow属性でiframeに入れて照会し、このページの結果と並べます。
-          チェックを外した機能は<code>'none'</code>（止める）として渡します。同じオリジンの埋め込みなので、違いはPermissions Policyだけから生まれます。
-        </p>
+        <h3 data-i18n="ui.policy.title">埋め込み（iframe）の実験：Permissions Policy</h3>
+        <p class="muted" data-i18n-html="ui.policy.lead">このツールの照会用のページ（probe.html）を、下のallow属性でiframeに入れて照会し、このページの結果と並べます。チェックを外した機能は<code>'none'</code>（止める）として渡します。同じオリジンの埋め込みなので、違いはPermissions Policyだけから生まれます。</p>
         <fieldset class="policy-features">
-          <legend>iframeに許す機能（allow属性）</legend>
+          <legend data-i18n="ui.policy.legend">iframeに許す機能（allow属性）</legend>
           <div id="policyChecks" class="policy-checks"></div>
         </fieldset>
         <div class="row policy-actions">
-          <button type="button" id="policyAll" class="chip">すべて許す</button>
-          <button type="button" id="policyNone" class="chip">すべて止める</button>
-          <button type="button" id="policyRun" class="rescan-btn">▶ このallowで埋め込んで照会</button>
+          <button type="button" id="policyAll" class="chip" data-i18n="ui.policy.all">すべて許す</button>
+          <button type="button" id="policyNone" class="chip" data-i18n="ui.policy.none">すべて止める</button>
+          <button type="button" id="policyRun" class="rescan-btn" data-i18n="ui.policy.run">▶ このallowで埋め込んで照会</button>
         </div>
-        <p class="muted small">iframeのallow属性</p>
+        <p class="muted small" data-i18n="ui.policy.allow">iframeのallow属性</p>
         <pre id="policyAllow" class="policy-allow"></pre>
         <div id="policyFrameWrap" class="policy-frame"></div>
         <p id="policySummary" class="policy-summary" role="status" aria-live="polite"></p>
         <div id="policyTableWrap" class="table-wrap"></div>
-        <p class="muted tiny">
-          参考（2026-10-10、Edgeの実測）：別のサイトのiframeにallowなしで入れると、camera・microphone・geolocation・midi・clipboard-read・clipboard-write・idle-detectionがdeniedになり、
-          notifications・pushはallowを付けてもdeniedでした。
-        </p>
+        <p class="muted tiny" data-i18n="ui.policy.ref">参考（2026-10-10、Edgeの実測）：別のサイトのiframeにallowなしで入れると、camera・microphone・geolocation・midi・clipboard-read・clipboard-write・idle-detectionがdeniedになり、notifications・pushはallowを付けてもdeniedでした。</p>
       </div>
     </section>
 
     <!-- Learn -->
     <section id="learn" class="panel" role="tabpanel" aria-labelledby="tab-learn" hidden>
       <div class="card">
-        <h2>📚 座学：ブラウザーの権限の基礎知識</h2>
-        <p class="muted lead-note">各セクションを押すと開きます</p>
+        <h2 data-i18n="ui.learn.title">📚 座学：ブラウザーの権限の基礎知識</h2>
+        <p class="muted lead-note" data-i18n="ui.learn.lead">各セクションを押すと開きます</p>
 
         <!-- Accordion 1 -->
         <div class="accordion-section">
-          <button type="button" class="accordion-header" data-accordion="permissions-api" aria-expanded="false" aria-controls="acc-permissions-api">
-            🔑 Permissions APIとは
-          </button>
+          <button type="button" class="accordion-header" data-accordion="permissions-api" aria-expanded="false" aria-controls="acc-permissions-api" data-i18n="ui.learn.acc1">🔑 Permissions APIとは</button>
           <div class="accordion-content" id="acc-permissions-api" data-accordion-content="permissions-api">
-            <p><strong>Permissions API</strong>は、Webページがブラウザーの機能（位置情報・カメラ・通知など）を使ってよいかの状態を、共通の方法で問い合わせる仕組みです。</p>
+            <p data-i18n-html="ui.learn.i1"><strong>Permissions API</strong>は、Webページがブラウザーの機能（位置情報・カメラ・通知など）を使ってよいかの状態を、共通の方法で問い合わせる仕組みです。</p>
             <ul>
-              <li>照会の書き方：<code>navigator.permissions.query({ name: 'camera' })</code>。答えは<code>granted</code>（許可済み）・<code>prompt</code>（使う前に尋ねられる）・<code>denied</code>（拒否済み）の3つ</li>
-              <li>このツールの表示：照会できなかった権限は、機能のAPIがあれば<code>unknown</code>（照会できない）、なければ<code>unsupported</code>（機能なし）と分けて出す。unknownはスコアの平均に入れない</li>
-              <li>ブラウザーごとに照会できる名前が違う：Chromium系（Chrome・Edge）は多く、Firefox・Safariは少ない。知らない名前はTypeErrorで拒否される</li>
-              <li>通知だけは古い<code>Notification.permission</code>でも読める。未決定は<code>default</code>と返り、Permissions APIの<code>prompt</code>にあたる</li>
+              <li data-i18n-html="ui.learn.i2">照会の書き方：<code>navigator.permissions.query({ name: 'camera' })</code>。答えは<code>granted</code>（許可済み）・<code>prompt</code>（使う前に尋ねられる）・<code>denied</code>（拒否済み）の3つ</li>
+              <li data-i18n-html="ui.learn.i3">このツールの表示：照会できなかった権限は、機能のAPIがあれば<code>unknown</code>（照会できない）、なければ<code>unsupported</code>（機能なし）と分けて出す。unknownはスコアの平均に入れない</li>
+              <li data-i18n-html="ui.learn.i4">ブラウザーごとに照会できる名前が違う：Chromium系（Chrome・Edge）は多く、Firefox・Safariは少ない。知らない名前はTypeErrorで拒否される</li>
+              <li data-i18n-html="ui.learn.i5">通知だけは古い<code>Notification.permission</code>でも読める。未決定は<code>default</code>と返り、Permissions APIの<code>prompt</code>にあたる</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 2 -->
         <div class="accordion-section">
-          <button type="button" class="accordion-header" data-accordion="scope" aria-expanded="false" aria-controls="acc-scope">
-            🔭 このページに見えるもの・見えないもの
-          </button>
+          <button type="button" class="accordion-header" data-accordion="scope" aria-expanded="false" aria-controls="acc-scope" data-i18n="ui.learn.acc2">🔭 このページに見えるもの・見えないもの</button>
           <div class="accordion-content" id="acc-scope" data-accordion-content="scope">
             <ul>
-              <li>照会で見えるのは、照会したページのオリジン（このツールなら<code>https://ipusiron.github.io</code>）への決定だけ。ほかのサイトに与えた許可は、どのページからも見えない</li>
-              <li>ほかのサイトの許可を確かめるには、ブラウザーの設定を開く（Chromeは<code>chrome://settings/content</code>、Edgeは<code>edge://settings/content</code>、Firefoxは<code>about:preferences#privacy</code>の「許可設定」）</li>
-              <li>照会には利用者の操作が要らない。どのサイトも、開いた瞬間に同じ照会ができる。尋ねずに読めるこの情報は、ブラウザーを見分ける材料（指紋）にもなる</li>
-              <li>iframeに埋め込まれたページは、埋め込み元のPermissions Policyに従う。許されていない機能は、尋ねられずに<code>denied</code>になる</li>
+              <li data-i18n-html="ui.learn.i6">照会で見えるのは、照会したページのオリジン（このツールなら<code>https://ipusiron.github.io</code>）への決定だけ。ほかのサイトに与えた許可は、どのページからも見えない</li>
+              <li data-i18n-html="ui.learn.i7">ほかのサイトの許可を確かめるには、ブラウザーの設定を開く（Chromeは<code>chrome://settings/content</code>、Edgeは<code>edge://settings/content</code>、Firefoxは<code>about:preferences#privacy</code>の「許可設定」）</li>
+              <li data-i18n-html="ui.learn.i8">照会には利用者の操作が要らない。どのサイトも、開いた瞬間に同じ照会ができる。尋ねずに読めるこの情報は、ブラウザーを見分ける材料（指紋）にもなる</li>
+              <li data-i18n-html="ui.learn.i9">iframeに埋め込まれたページは、埋め込み元のPermissions Policyに従う。許されていない機能は、尋ねられずに<code>denied</code>になる</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 3 -->
         <div class="accordion-section">
-          <button type="button" class="accordion-header" data-accordion="permission-risks" aria-expanded="false" aria-controls="acc-permission-risks">
-            🔐 権限の種類とリスク
-          </button>
+          <button type="button" class="accordion-header" data-accordion="permission-risks" aria-expanded="false" aria-controls="acc-permission-risks" data-i18n="ui.learn.acc3">🔐 権限の種類とリスク</button>
           <div class="accordion-content" id="acc-permission-risks" data-accordion-content="permission-risks">
-            <h3>🟢 デバイスアクセス系</h3>
+            <h3 data-i18n="ui.learn.h1">🟢 デバイスアクセス系</h3>
             <ul>
-              <li>camera / microphone：盗撮・盗聴。許可を与えたサイトは、ページを開いている間ずっと使える</li>
-              <li>geolocation：行動の追跡・居場所の特定</li>
-              <li>midi：接続しているMIDI機器の構成が、ブラウザーを見分ける材料になる</li>
+              <li data-i18n-html="ui.learn.i10">camera / microphone：盗撮・盗聴。許可を与えたサイトは、ページを開いている間ずっと使える</li>
+              <li data-i18n-html="ui.learn.i11">geolocation：行動の追跡・居場所の特定</li>
+              <li data-i18n-html="ui.learn.i12">midi：接続しているMIDI機器の構成が、ブラウザーを見分ける材料になる</li>
             </ul>
 
-            <h3>🔵 データアクセス系</h3>
+            <h3 data-i18n="ui.learn.h2">🔵 データアクセス系</h3>
             <ul>
-              <li>clipboard-read：コピーしたパスワードや機密情報の読み取り</li>
-              <li>clipboard-write：ClickFixと呼ばれる手口で悪用される。偽のCAPTCHAのボタンを押させ、裏で
-                <code>navigator.clipboard.writeText()</code>により悪性のコマンドをクリップボードに書き込み、
-                「Win+R（ファイル名を指定して実行）やターミナルに貼り付けて実行して」と指示する（Microsoft Security Blog、2025年8月）。
-                Chromium系ではこの書き込みに許可を求められない</li>
-              <li>persistent-storage：消されにくい保存領域。長く残る識別子・容量の圧迫</li>
-              <li>background-sync：ページを閉じたあともService Workerが同期できる。Chromium系では既定で許可されている</li>
+              <li data-i18n-html="ui.learn.i13">clipboard-read：コピーしたパスワードや機密情報の読み取り</li>
+              <li data-i18n-html="ui.learn.i14">clipboard-write：ClickFixと呼ばれる手口で悪用される。偽のCAPTCHAのボタンを押させ、裏で
+                <code>navigator.clipboard.writeText()</code>により悪性のコマンドをクリップボードに書き込み、「Win+R（ファイル名を指定して実行）やターミナルに貼り付けて実行して」と指示する（Microsoft Security Blog、2025年8月）。Chromium系ではこの書き込みに許可を求められない</li>
+              <li data-i18n-html="ui.learn.i15">persistent-storage：消されにくい保存領域。長く残る識別子・容量の圧迫</li>
+              <li data-i18n-html="ui.learn.i16">background-sync：ページを閉じたあともService Workerが同期できる。Chromium系では既定で許可されている</li>
             </ul>
 
-            <h3>🟣 通信・通知系</h3>
+            <h3 data-i18n="ui.learn.h3">🟣 通信・通知系</h3>
             <ul>
-              <li>notifications：偽の警告の通知で、フィッシングサイトへ誘導する</li>
-              <li>push：ページを閉じていても届く。通知の許可と組み合わせて使われる</li>
-              <li>payment-handler：Webの決済アプリ。偽の決済画面の土台になりうる</li>
-              <li>idle-detection：操作していない・画面がロックされた、を検知する。在席・離席の監視</li>
+              <li data-i18n-html="ui.learn.i17">notifications：偽の警告の通知で、フィッシングサイトへ誘導する</li>
+              <li data-i18n-html="ui.learn.i18">push：ページを閉じていても届く。通知の許可と組み合わせて使われる</li>
+              <li data-i18n-html="ui.learn.i19">payment-handler：Webの決済アプリ。偽の決済画面の土台になりうる</li>
+              <li data-i18n-html="ui.learn.i20">idle-detection：操作していない・画面がロックされた、を検知する。在席・離席の監視</li>
             </ul>
 
-            <h3>🟠 画面・ネットワーク・センサー系</h3>
+            <h3 data-i18n="ui.learn.h4">🟠 画面・ネットワーク・センサー系</h3>
             <ul>
-              <li>local-network：公開されたサイトから、LANの中の機器（ルーター・プリンター・NAS）やこのPC（localhost）への通信。Chromium系では、この通信の前に許可を求める仕組み（Local Network Access）が入っている</li>
-              <li>storage-access：埋め込まれたページが、自分のCookie（サードパーティーCookie）を使う許可。サイトをまたいだ追跡に関わる</li>
-              <li>screen-wake-lock：画面が暗くなるのを止める。EdgeとFirefoxでは開いた直後から許可されていた</li>
-              <li>window-management・local-fonts：画面の構成やフォントの一覧は、ブラウザーを見分ける強い材料になる</li>
-              <li>accelerometer：センサー。Chromium系では既定で許可されている</li>
+              <li data-i18n-html="ui.learn.i21">local-network：公開されたサイトから、LANの中の機器（ルーター・プリンター・NAS）やこのPC（localhost）への通信。Chromium系では、この通信の前に許可を求める仕組み（Local Network Access）が入っている</li>
+              <li data-i18n-html="ui.learn.i22">storage-access：埋め込まれたページが、自分のCookie（サードパーティーCookie）を使う許可。サイトをまたいだ追跡に関わる</li>
+              <li data-i18n-html="ui.learn.i23">screen-wake-lock：画面が暗くなるのを止める。EdgeとFirefoxでは開いた直後から許可されていた</li>
+              <li data-i18n-html="ui.learn.i24">window-management・local-fonts：画面の構成やフォントの一覧は、ブラウザーを見分ける強い材料になる</li>
+              <li data-i18n-html="ui.learn.i25">accelerometer：センサー。Chromium系では既定で許可されている</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 4 -->
         <div class="accordion-section">
-          <button type="button" class="accordion-header" data-accordion="persistence" aria-expanded="false" aria-controls="acc-persistence">
-            ⏱️ 許可はいつまで続くか・尋ねられない権限
-          </button>
+          <button type="button" class="accordion-header" data-accordion="persistence" aria-expanded="false" aria-controls="acc-persistence" data-i18n="ui.learn.acc4">⏱️ 許可はいつまで続くか・尋ねられない権限</button>
           <div class="accordion-content" id="acc-persistence" data-accordion-content="persistence">
             <ul>
-              <li>今回のみの許可：Chrome（116以降のデスクトップ版）は、位置情報・カメラ・マイクで「今回のみ許可」を選べる。ページを閉じる・別のページへ移る・5分以上裏に置く・16時間たつ、のいずれかで失効し、<code>granted</code>から<code>prompt</code>に戻る</li>
-              <li>Firefoxは、カメラ・マイクの問い合わせで「この決定を記憶する」を付けなければ一時的な許可になり、1時間たつかタブを閉じると消える</li>
-              <li>Safariは、拒否していても、実際にカメラ・位置情報などを要求するまでは<code>prompt</code>と答えることがある。また<code>change</code>の通知が届かないので、このツールのライブ更新は効かない</li>
-              <li>尋ねられない権限：Chromium系ではbackground-sync・センサー・clipboard-writeが既定で許可されている（このツールでは開いた直後からgrantedと出る）。persistent-storageはChromium系とSafariが利用状況で自動で決め、Firefoxは尋ねる</li>
-              <li>このツールは<code>change</code>の通知を受け取り、ブラウザーの設定やアドレスバーの鍵のアイコンから許可を変えると、その場でレーダーとログに反映する</li>
+              <li data-i18n-html="ui.learn.i26">今回のみの許可：Chrome（116以降のデスクトップ版）は、位置情報・カメラ・マイクで「今回のみ許可」を選べる。ページを閉じる・別のページへ移る・5分以上裏に置く・16時間たつ、のいずれかで失効し、<code>granted</code>から<code>prompt</code>に戻る</li>
+              <li data-i18n-html="ui.learn.i27">Firefoxは、カメラ・マイクの問い合わせで「この決定を記憶する」を付けなければ一時的な許可になり、1時間たつかタブを閉じると消える</li>
+              <li data-i18n-html="ui.learn.i28">Safariは、拒否していても、実際にカメラ・位置情報などを要求するまでは<code>prompt</code>と答えることがある。また<code>change</code>の通知が届かないので、このツールのライブ更新は効かない</li>
+              <li data-i18n-html="ui.learn.i29">尋ねられない権限：Chromium系ではbackground-sync・センサー・clipboard-writeが既定で許可されている（このツールでは開いた直後からgrantedと出る）。persistent-storageはChromium系とSafariが利用状況で自動で決め、Firefoxは尋ねる</li>
+              <li data-i18n-html="ui.learn.i30">このツールは<code>change</code>の通知を受け取り、ブラウザーの設定やアドレスバーの鍵のアイコンから許可を変えると、その場でレーダーとログに反映する</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 5 -->
         <div class="accordion-section">
-          <button type="button" class="accordion-header" data-accordion="best-practices" aria-expanded="false" aria-controls="acc-best-practices">
-            🛡️ セキュリティのベストプラクティス
-          </button>
+          <button type="button" class="accordion-header" data-accordion="best-practices" aria-expanded="false" aria-controls="acc-best-practices" data-i18n="ui.learn.acc5">🛡️ セキュリティのベストプラクティス</button>
           <div class="accordion-content" id="acc-best-practices" data-accordion-content="best-practices">
             <ul>
-              <li>最小権限の原則：必要最低限の権限だけを許可する</li>
-              <li>定期的な見直し：ブラウザーの設定（サイトの設定・許可設定）から、使わなくなったサイトの許可を取り消す</li>
-              <li>オリジンの確認：許可する前に、問い合わせに表示されたサイトの名前（オリジン）が意図したものかを確かめる</li>
-              <li>すぐに止める：カメラ・マイクは使い終わったら止める（このツールも取得してすぐ止める）</li>
-              <li>貼り付けて実行しない：ページの指示でコマンドを「ファイル名を指定して実行」やターミナルに貼り付けない（ClickFix対策）</li>
-              <li>プライベートウィンドウ：一時的に試したいときは、プライベートウィンドウを使う</li>
+              <li data-i18n-html="ui.learn.i31">最小権限の原則：必要最低限の権限だけを許可する</li>
+              <li data-i18n-html="ui.learn.i32">定期的な見直し：ブラウザーの設定（サイトの設定・許可設定）から、使わなくなったサイトの許可を取り消す</li>
+              <li data-i18n-html="ui.learn.i33">オリジンの確認：許可する前に、問い合わせに表示されたサイトの名前（オリジン）が意図したものかを確かめる</li>
+              <li data-i18n-html="ui.learn.i34">すぐに止める：カメラ・マイクは使い終わったら止める（このツールも取得してすぐ止める）</li>
+              <li data-i18n-html="ui.learn.i35">貼り付けて実行しない：ページの指示でコマンドを「ファイル名を指定して実行」やターミナルに貼り付けない（ClickFix対策）</li>
+              <li data-i18n-html="ui.learn.i36">プライベートウィンドウ：一時的に試したいときは、プライベートウィンドウを使う</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 6 -->
         <div class="accordion-section">
-          <button type="button" class="accordion-header" data-accordion="how-to-learn" aria-expanded="false" aria-controls="acc-how-to-learn">
-            🧪 このツールの学習方法
-          </button>
+          <button type="button" class="accordion-header" data-accordion="how-to-learn" aria-expanded="false" aria-controls="acc-how-to-learn" data-i18n="ui.learn.acc6">🧪 このツールの学習方法</button>
           <div class="accordion-content" id="acc-how-to-learn" data-accordion-content="how-to-learn">
             <ol>
-              <li>現在の状態を確認：「レーダー」タブで、このサイトに対する状態を見る（開いた直後からgrantedの権限は、尋ねずに許可されているもの）</li>
-              <li>権限を体験：「クイックテスト」で要求を出し、ブラウザーの問い合わせを体験する（カメラ・マイクはすぐ止め、座標・クリップボードの内容は表示しない）</li>
-              <li>変化を観察：許可・拒否のあと、レーダーとログが自動で変わる。鍵のアイコンから許可を取り消しても変わる</li>
-              <li>詳細を理解：「詳細」タブで、状態の出所（Permissions API／Notification.permission／照会できない理由）を確かめる</li>
-              <li>リセット：ブラウザーの設定でこのサイトの許可を取り消し、「Cleanup」でService Workerの登録を解除する</li>
+              <li data-i18n-html="ui.learn.i37">現在の状態を確認：「レーダー」タブで、このサイトに対する状態を見る（開いた直後からgrantedの権限は、尋ねずに許可されているもの）</li>
+              <li data-i18n-html="ui.learn.i38">権限を体験：「クイックテスト」で要求を出し、ブラウザーの問い合わせを体験する（カメラ・マイクはすぐ止め、座標・クリップボードの内容は表示しない）</li>
+              <li data-i18n-html="ui.learn.i39">変化を観察：許可・拒否のあと、レーダーとログが自動で変わる。鍵のアイコンから許可を取り消しても変わる</li>
+              <li data-i18n-html="ui.learn.i40">詳細を理解：「詳細」タブで、状態の出所（Permissions API／Notification.permission／照会できない理由）を確かめる</li>
+              <li data-i18n-html="ui.learn.i41">リセット：ブラウザーの設定でこのサイトの許可を取り消し、「Cleanup」でService Workerの登録を解除する</li>
             </ol>
           </div>
         </div>
 
         <!-- Accordion 7 - Resource Links -->
         <div class="accordion-section">
-          <button type="button" class="accordion-header" data-accordion="resources" aria-expanded="false" aria-controls="acc-resources">
-            🔗 関連リソース
-          </button>
+          <button type="button" class="accordion-header" data-accordion="resources" aria-expanded="false" aria-controls="acc-resources" data-i18n="ui.learn.acc7">🔗 関連リソース</button>
           <div class="accordion-content" id="acc-resources" data-accordion-content="resources">
             <ul>
-              <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API" target="_blank" rel="noopener noreferrer">MDN: Permissions API（英語）</a></li>
-              <li><a href="https://w3c.github.io/permissions/" target="_blank" rel="noopener noreferrer">W3C: Permissions（仕様、英語）</a></li>
-              <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Permissions_Policy" target="_blank" rel="noopener noreferrer">MDN: Permissions Policy（英語）</a></li>
-              <li><a href="https://developer.chrome.com/blog/one-time-permissions" target="_blank" rel="noopener noreferrer">Chrome for Developers: One-time permissions（英語）</a></li>
+              <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API" target="_blank" rel="noopener noreferrer" data-i18n="ui.learn.res1">MDN: Permissions API（英語）</a></li>
+              <li><a href="https://w3c.github.io/permissions/" target="_blank" rel="noopener noreferrer" data-i18n="ui.learn.res2">W3C: Permissions（仕様、英語）</a></li>
+              <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Permissions_Policy" target="_blank" rel="noopener noreferrer" data-i18n="ui.learn.res3">MDN: Permissions Policy（英語）</a></li>
+              <li><a href="https://developer.chrome.com/blog/one-time-permissions" target="_blank" rel="noopener noreferrer" data-i18n="ui.learn.res4">Chrome for Developers: One-time permissions（英語）</a></li>
               <li><a href="https://www.microsoft.com/en-us/security/blog/2025/08/21/think-before-you-clickfix-analyzing-the-clickfix-social-engineering-technique/"
-                  target="_blank" rel="noopener noreferrer">Microsoft Security Blog: ClickFixの分析（英語）</a></li>
-              <li><a href="https://github.com/ipusiron/browser-permission-radar/blob/main/PERMISSIONS_API.md" target="_blank" rel="noopener noreferrer">技術仕様書（このリポジトリー）</a></li>
+                  target="_blank" rel="noopener noreferrer" data-i18n="ui.learn.res5">Microsoft Security Blog: ClickFixの分析（英語）</a></li>
+              <li><a href="https://github.com/ipusiron/browser-permission-radar/blob/main/PERMISSIONS_API.md" target="_blank" rel="noopener noreferrer" data-i18n="ui.learn.res6">技術仕様書（このリポジトリー）</a></li>
             </ul>
           </div>
         </div>
 
-        <p class="muted closing-note">※ このツールは教育目的です。照会と表示はすべてブラウザーの中で行い、結果をサーバーへ送りません。</p>
+        <p class="muted closing-note" data-i18n="ui.learn.closing">※ このツールは教育目的です。照会と表示はすべてブラウザーの中で行い、結果をサーバーへ送りません。</p>
       </div>
     </section>
   </main>
 
   <footer>
     <div class="footer">
-      🔗 <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank" rel="noopener noreferrer">GitHubリポジトリー（ipusiron/browser-permission-radar）</a>
+      🔗 <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank" rel="noopener noreferrer" data-i18n="ui.footer">GitHubリポジトリー（ipusiron/browser-permission-radar）</a>
     </div>
   </footer>
 

@@ -10,10 +10,11 @@ import { t, setLang, getLang } from '../js/i18n.js';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ja = MESSAGES.ja;
 
-test('script.js が t() で引く固定のキーは、すべて辞書にある', () => {
+test('script.js が引く固定のキー（t・log・K の引数、三項演算子の両辺）は、すべて辞書にある', () => {
   const src = readFileSync(join(ROOT, 'script.js'), 'utf8');
-  const keys = [...src.matchAll(/\bt\('([\w.-]+)'/g)].map(m => m[1]);
-  assert.ok(keys.length >= 30, `取り出したキーが少ない（${keys.length}）`);
+  const prefixes = 'log|test|compare|policy|state|source|score|radar|table|help|geo|bool|list|ui|baseline|group|perm';
+  const keys = [...src.matchAll(new RegExp(`'((?:${prefixes})\\.[\\w.-]+)'`, 'g'))].map(m => m[1]);
+  assert.ok(keys.length >= 60, `取り出したキーが少ない（${keys.length}）`);
   const missing = keys.filter(k => !(k in ja));
   assert.deepEqual(missing, []);
 });

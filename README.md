@@ -284,6 +284,7 @@ browser-permission-radar/
 │   ├── policy-core.test.js       # 埋め込みの実験の計算部
 │   ├── compare-core.test.js      # 比較の計算部（既定の表を実測の記録で検算）
 │   ├── messages.test.js          # 文言の辞書
+│   ├── i18n.test.js              # 日英の辞書・HTMLの既定の文・最初の言語
 │   ├── html.test.js              # index.htmlの静的な検査
 │   ├── contrast.test.js          # 配色のコントラスト
 │   ├── format.test.js            # 行の長さ・改行・見えない文字
