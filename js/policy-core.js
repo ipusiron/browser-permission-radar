@@ -26,6 +26,8 @@ export const POLICY_FEATURES = {
 
 /** メッセージの種類（照会用のページ → このページ） */
 export const PROBE_MESSAGE_TYPE = 'bpr-probe-result';
+/** メッセージの種類（このページ → 照会用のページ。言語の切り替え） */
+export const LANG_MESSAGE_TYPE = 'bpr-lang';
 
 /**
  * allow 属性の値を組み立てる。許す機能は名前だけ（＝埋め込み元と同じオリジンに許す）、止める機能は 'none'

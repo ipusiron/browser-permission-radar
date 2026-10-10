@@ -4,9 +4,12 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PERMISSIONS, GROUPS, SCORE_TABLE, classify, summarize, formatScore } from '../js/perm-core.js';
+import { compareResults, summarizeComparison } from '../js/policy-core.js';
+import { BASELINES, exposure } from '../js/compare-core.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+const readmeEn = readFileSync(join(ROOT, 'README.en.md'), 'utf8');
 const fx = JSON.parse(readFileSync(join(ROOT, 'test/fixtures/measured-20261010.json'), 'utf8'));
 
 /** 実測の記録（照会の生の結果）を、画面と同じ分類・スコアにかける */
@@ -117,14 +120,86 @@ test('ユースケースの数値は、実測の記録から計算し直した�
   const headless = fx.chromium_headless_shell;
   assert.equal(headless.notifications, 'prompt');
   assert.equal(headless.__notification, 'denied');
+  // 4つ目のレーダー
+  assert.equal(edge.s.extra.measured, 6);
+  assert.ok(readme.includes(`Edgeでは6件中6件を照会できてスコアは${edge.fmt('extra')}、Firefoxは照会できない権限が多く${ff.fmt('extra')}でした`));
 });
 
-test('README の画像はすべて実在し、assets の PNG は README から参照されているものだけ', () => {
-  const refs = [...readme.matchAll(/!\[[^\]]*\]\((assets\/[^)]+)\)/g)].map(m => m[1]);
-  assert.ok(refs.length >= 3);
-  for (const r of refs) assert.ok(existsSync(join(ROOT, r)), r);
+/** 比較タブ・埋め込みタブの数値（実測の記録を画面と同じ関数にかける） */
+function tabNumbers() {
+  const toR = o => Object.entries(o).map(([key, state]) => ({ key, state }));
+  const out = {};
+  for (const b of ['edge', 'firefox']) {
+    const x = fx.policy_all_none[b];
+    const rows = compareResults(toR(x.top), toR(x.frame), []);
+    out[b] = {
+      exposure: exposure(toR(BASELINES[b].states)),
+      policy: summarizeComparison(rows),
+      unchanged: rows.filter(r => r.allowed === false && !r.changed && !['unknown', 'unsupported'].includes(r.top)).map(r => r.key),
+    };
+  }
+  return out;
+}
+
+test('比較・埋め込みの数値も、実測の記録から計算し直した値と一致する（日英）', () => {
+  const n = tabNumbers();
+  const { edge, firefox } = n;
+  const e = edge.exposure;
+  const f = firefox.exposure;
+  assert.ok(readme.includes(`Edgeでは${e.queried}件中${e.answered}件、Firefoxでは${f.queried}件中${f.answered}件でした`));
+  assert.ok(readmeEn.includes(`Edge answered ${e.answered} of ${e.queried} and Firefox ${f.answered} of ${f.queried}`));
+  assert.deepEqual(edge.unchanged, ['payment-handler', 'local-network', 'accelerometer']);
+  assert.deepEqual(firefox.unchanged, ['midi', 'storage-access']);
+  assert.ok(readme.includes(`Edgeでは止めた${edge.policy.blocked}件のうち${edge.policy.blockedDenied}件が\`denied\`になり`));
+  assert.ok(readme.includes(`Firefoxでは照会できた${firefox.policy.blockedMeasured}件中${firefox.policy.blockedDenied}件が\`denied\`になり`));
+  assert.ok(readmeEn.includes(`Edge turned ${edge.policy.blockedDenied} of the ${edge.policy.blocked} blocked features into \`denied\``));
+  assert.ok(readmeEn.includes(`Firefox turned ${firefox.policy.blockedDenied} of the ${firefox.policy.blockedMeasured} it could query into \`denied\``));
+});
+
+test('英語版 README の数値（レーダーのスコア・埋め込み）も日本語版と同じ', () => {
+  const edge = scoresOf('edge');
+  const ff = scoresOf('firefox');
+  const noAllow = scoresOf('edge_iframe_no_allow');
+  const allow = scoresOf('edge_iframe_allow');
+  assert.ok(readmeEn.includes(`a data access score of ${edge.fmt('data')} and a communication & notifications score of ${edge.fmt('comm')}`));
+  assert.ok(readmeEn.includes(`its data access score was ${ff.fmt('data')}, calculated from ${ff.s.data.measured} of 4`));
+  assert.ok(readmeEn.includes(`giving a score of ${noAllow.fmt('device')}`));
+  assert.ok(readmeEn.includes(`the score went back to ${allow.fmt('device')}`));
+  assert.ok(readmeEn.includes(`could query 6 of 6 in Edge with a score of ${edge.fmt('extra')}`));
+  assert.ok(readmeEn.includes(`scored ${ff.fmt('extra')}`));
+});
+
+test('日英の README: 互いへのリンク、見出しの数・並び（H2 の絵文字）が同じ、英語版に日本語がない', () => {
+  assert.equal(readmeEn.split('\n')[0], 'English · [日本語](README.md)');
+  assert.ok(readme.includes('[English](README.en.md) · 日本語'));
+  const heads = s => s.split('\n').filter(l => /^#{2,3} /.test(l));
+  const ja = heads(readme);
+  const en = heads(readmeEn);
+  assert.equal(en.length, ja.length);
+  ja.forEach((h, i) => {
+    assert.equal(en[i].split(' ')[0], h.split(' ')[0], `${h} / ${en[i]}`);
+    if (h.startsWith('## ')) assert.equal([...en[i].slice(3)][0], [...h.slice(3)][0], `${h} / ${en[i]}`);
+  });
+  let fence = false;
+  const bad = readmeEn.split('\n').slice(1).filter(l => {
+    if (l.startsWith('```')) { fence = !fence; return false; }
+    return /[぀-ヿ㐀-鿿！-｠　-〿]/.test(l);
+  });
+  assert.deepEqual(bad, []);
+  assert.ok(readmeEn.includes('**Day092 - 100 Security Tools with Generative AI**'));
+  assert.ok(readmeEn.includes('### Ways of using this tool in particular'));
+});
+
+test('README の画像はすべて実在し、assets の PNG は README から参照されているものだけ（英語は assets/en）', () => {
+  const refsOf = s => [...s.matchAll(/!\[[^\]]*\]\((assets\/[^)]+)\)/g)].map(m => m[1]);
+  const refs = refsOf(readme);
+  const refsEn = refsOf(readmeEn);
+  assert.ok(refs.length >= 5);
+  for (const r of [...refs, ...refsEn]) assert.ok(existsSync(join(ROOT, r)), r);
   const pngs = readdirSync(join(ROOT, 'assets')).filter(f => f.endsWith('.png')).map(f => `assets/${f}`);
   assert.deepEqual(pngs.sort(), [...new Set(refs)].sort());
+  const pngsEn = readdirSync(join(ROOT, 'assets/en')).filter(f => f.endsWith('.png')).map(f => `assets/en/${f}`);
+  assert.deepEqual(pngsEn.sort(), [...new Set(refsEn)].sort());
 });
 
 test('ディレクトリー構造: 全ファイルが載っていて、全行に説明がある', () => {

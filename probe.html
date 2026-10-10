@@ -12,10 +12,10 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="probe-body">
-  <p class="probe-text">埋め込みの実験用のページ（照会した権限: <span id="probeStatus">-</span>）</p>
+  <p id="probeText" class="probe-text">埋め込みの実験用のページ</p>
   <p id="probeAlone" class="notice" hidden>
-    このページは、Browser Permission Radarの「埋め込み」タブがiframeに入れて使う照会用のページです。
-    <a href="./">Browser Permission Radarを開く</a>
+    <span data-i18n="probe.alone">このページは、Browser Permission Radarの「埋め込み」タブがiframeに入れて使う照会用のページです。</span>
+    <a href="./" data-i18n="probe.open">Browser Permission Radarを開く</a>
   </p>
   <script type="module" src="js/probe.js"></script>
 </body>

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Browser Permission Radar** is a client-side tool that visualizes the permission states the page itself can see (12 permissions: geolocation, camera, microphone, MIDI, clipboard read/write, persistent storage, background sync, notifications, push, payment handler, idle detection) as category radar charts with scores, safe permission tests, and live updates via `PermissionStatus` `change` events.
+**Browser Permission Radar** is a client-side tool that visualizes the permission states the page itself can see (18 permissions in four categories: device; data; communication & notifications; screen, network & sensors) as radar charts with scores, safe permission tests, live updates via `PermissionStatus` `change` events, a Permissions Policy experiment (Embedding tab), and comparisons with measured browser defaults and exported results (Compare tab). The UI is Japanese/English.
 
 This is Day092 of the "100 Security Tools with Generative AI" project, focused on browser security education.
 
@@ -26,7 +26,11 @@ Static HTML/CSS/JavaScript with ES modules, no build step.
 | `js/scanner.js` | Querying (`queryOne`, `scanAll`) with browser APIs injected via `env`, feature detection, result diffs | No |
 | `js/radar-geom.js` | Radar geometry (axes, points, label boxes that never overlap points) | No |
 | `js/radar-svg.js` | Renders the radar as SVG (`renderRadar`); points are `role="button"` | Yes |
-| `js/messages.js`, `js/i18n.js` | UI/log strings and `t(key, params)` | No |
+| `js/policy-core.js` | Embedding experiment: `allow` builder, probe message validation, comparison | No |
+| `js/probe.js` + `probe.html` | Query page placed in a same-origin iframe; posts results to the same-origin parent only | Yes |
+| `js/compare-core.js` | Exposure counts, signature, export/import validation, measured `BASELINES` | No |
+| `js/messages.js` | UI/log strings, `ja` and `en` with identical keys | No |
+| `js/i18n.js` | `t(key, params)`, `pickInitialLang`, `applyI18n` (`data-i18n`, `data-i18n-html`, `data-i18n-attr`) | Partly |
 | `script.js` | UI glue: tabs, details table, tooltips, quick tests, live updates | Yes |
 | `sw.js` | Service Worker registered only when the Background Sync test is pressed (no fetch handler, no network) | - |
 
@@ -42,9 +46,15 @@ Static HTML/CSS/JavaScript with ES modules, no build step.
 
 1. Add an entry to `PERMISSIONS` in `js/perm-core.js` (key, group, descriptor, feature).
 2. If it uses a new feature API, add detection in `detectFeatures()` (`js/scanner.js`).
-3. Add `perm.<key>.desc` and `perm.<key>.risk` to `js/messages.js`.
-4. Optionally add a test button in `index.html` and an entry in `QUICK_TESTS` in `script.js`.
-5. Update README (category table, directory tree) and run `npm test`.
+3. Add `perm.<key>.desc` and `perm.<key>.risk` to both `ja` and `en` in `js/messages.js`.
+4. If it is policy-controlled, add it to `POLICY_FEATURES` in `js/policy-core.js`; update `BASELINES` and the fixture if you re-measure.
+5. Optionally add a test button in `index.html` and an entry in `QUICK_TESTS` in `script.js`.
+6. Update both READMEs (category table, directory tree) and run `npm test`.
+
+### i18n
+
+- Static text uses `data-i18n` / `data-i18n-html` / `data-i18n-attr`; the HTML default must equal the `ja` value (`test/i18n.test.js`).
+- Dynamic messages (log, statuses) are stored as key + params and re-rendered on language change; never store translated strings.
 
 ## Security & Privacy Principles
 

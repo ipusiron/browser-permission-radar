@@ -12,9 +12,12 @@ Browser Permission Radarの実装の詳細を解説します。行番号は書�
 4. [ライブ更新](#ライブ更新)
 5. [レーダーの描画（SVG）](#レーダーの描画svg)
 6. [権限テストとBackground Sync](#権限テストとbackground-sync)
-7. [ツールチップ・タブ・アコーディオン](#ツールチップタブアコーディオン)
-8. [セキュリティ対策の実装](#セキュリティ対策の実装)
-9. [テスト](#テスト)
+7. [埋め込みの実験（Permissions Policy）](#埋め込みの実験permissions-policy)
+8. [比較（尋ねずに読める情報・書き出しと読み込み）](#比較尋ねずに読める情報書き出しと読み込み)
+9. [日英の切り替え](#日英の切り替え)
+10. [ツールチップ・タブ・アコーディオン](#ツールチップタブアコーディオン)
+11. [セキュリティ対策の実装](#セキュリティ対策の実装)
+12. [テスト](#テスト)
 
 ---
 
@@ -26,8 +29,12 @@ Browser Permission Radarの実装の詳細を解説します。行番号は書�
 | `js/scanner.js` | 照会（`queryOne`・`scanAll`）、機能の有無（`detectFeatures`）、差分（`diffResults`）。ブラウザーのAPIは引数`env`で受け取る | 使わない |
 | `js/radar-geom.js` | レーダーの座標（`axisAngles`・`pointsFor`）とラベルの配置（`labelBox`） | 使わない |
 | `js/radar-svg.js` | レーダーをSVGで描く（`renderRadar`） | 使う |
-| `js/messages.js`・`js/i18n.js` | 文言の辞書と取り出し（`t`） | 使わない |
-| `script.js` | 画面の処理（タブ・表・ツールチップ・権限テスト・ライブ更新） | 使う |
+| `js/policy-core.js` | 埋め込みの実験（`buildAllow`・`parseProbeMessage`・`compareResults`） | 使わない |
+| `js/probe.js` | 照会用のページ（`probe.html`）の処理。結果を同じオリジンの親へ送る | 使う |
+| `js/compare-core.js` | 尋ねずに読める情報（`exposure`・`signature`）、書き出しと読み込み（`buildExport`・`parseImport`）、既定（`BASELINES`）との比較 | 使わない |
+| `js/messages.js` | 文言の辞書（日英、同じキー） | 使わない |
+| `js/i18n.js` | 文言の取り出し（`t`）、最初の言語（`pickInitialLang`）、画面への反映（`applyI18n`） | 一部 |
+| `script.js` | 画面の処理（タブ・表・ツールチップ・権限テスト・ライブ更新・比較・埋め込み・日英） | 使う |
 | `sw.js` | Background Syncを試すときだけ登録するService Worker | - |
 
 DOMを使わないモジュールは、`node --test`でそのまま検査できます。`script.js`と`js/*.js`はES modulesで、`index.html`から`<script type="module" src="script.js">`で読み込みます。
@@ -136,6 +143,42 @@ await registration.sync.register('bpr-test-sync');
 
 ---
 
+## 埋め込みの実験（Permissions Policy）
+
+照会用のページ（`probe.html`）を同じオリジンのiframeに入れ、止める機能を`'none'`にした`allow`属性を付けて照会させます。
+
+```javascript
+// js/policy-core.js（要約）
+buildAllow(['camera']);
+// → "geolocation 'none'; camera; microphone 'none'; …"（許す機能は名前だけ、止める機能は 'none'）
+```
+
+- 権限キーとPolicyの機能名の対応は`POLICY_FEATURES`に持ちます（`payment-handler`は`payment`）。通知・push・永続ストレージ・Background SyncはPolicyの対象外です
+- `probe.js`は照会の結果（キーと状態だけ）を`postMessage(payload, location.origin)`で親へ送ります。親は`ev.source`がそのiframeか、`ev.origin`が同じか、`parseProbeMessage`で形（知っている権限キー・状態、重複なし、件数の上限）を確かめてから表にします
+- 言語の切り替えは、親から`{ type: 'bpr-lang', lang }`を同じオリジンに送り、`probe.js`は送り元が親のときだけ受け取ります
+- 同じオリジンの埋め込みなので、違いはPolicyだけから生まれます。2026-10-10の実測では、Edgeは止めた14件のうち11件が`denied`、Firefoxは照会できた6件中4件が`denied`でした
+
+---
+
+## 比較（尋ねずに読める情報・書き出しと読み込み）
+
+- `exposure(results)`: 照会した件数と、`granted`・`prompt`・`denied`の答えが得られた件数
+- `signature(results)`: 権限の定義の順に「キー=状態」を`;`でつないだ文字列。画面は`crypto.subtle.digest('SHA-256', …)`の先頭16桁を出します
+- `BASELINES`: 新しいプロファイルで開いた直後の状態（Edge 155・Firefox 146、2026-10-10）。`test/compare-core.test.js`が実測の記録（`test/fixtures/measured-20261010.json`）を画面と同じ分類にかけて一致を確かめます
+- `buildExport`・`parseImport`: 書き出すJSONは`{ tool, version, takenAt, label, results }`だけ。読み込みは64KBまで、ツール名・版・権限キー・状態を検証し、名前から制御文字・向きを変える文字を除き、40文字で切ります
+- 書き出しは`application/json`のBlobにします（`text/plain`だとChromium系が`.txt`を足すことがある）
+
+---
+
+## 日英の切り替え
+
+- 固定の文: `data-i18n`（文字）、`data-i18n-html`（`<code>`・`<strong>`を含む座学の文。辞書の文だけを`innerHTML`に入れる）、`data-i18n-attr`（`aria-label`・`data-tooltip`・`title`）
+- 最初の言語: `?lang=` → 保存した選択（`localStorage`、使えなくても動く） → ブラウザーの言語（日本語以外は英語）
+- ログ・取り込みの結果・埋め込みの実行中の文は「キー＋引数」で持ち、引数の値が`{ k, p }`なら描くときにその言語で引きます。言語を変えたら照会し直さずに描き直します
+- `test/i18n.test.js`が、日英のキーと差し込みの一致、英語に日本語が残らないこと、HTMLの既定の文と日本語の辞書の一致を検査します
+
+---
+
 ## ツールチップ・タブ・アコーディオン
 
 - 「?」は`<button>`です。マウスを乗せる・フォーカスで開き、押すと固定し、もう一度押すかEscで閉じます。開いている間は`aria-expanded="true"`と`aria-describedby`（`role="tooltip"`の要素）を付けます
@@ -161,7 +204,10 @@ await registration.sync.register('bpr-test-sync');
 - `perm-core.test.js`: 分類・通知の正規化・スコアの表と平均・Edgeの実測の再現
 - `scanner.test.js`: 偽のブラウザーで照会（Firefoxの実測の再現、descriptorの候補、Permissions APIのないブラウザー）
 - `radar-geom.test.js`: 軸の角度・点の座標・ラベルが点と互いに重ならないこと・押せる範囲の大きさ
+- `policy-core.test.js`: `allow`の組み立て、メッセージの検証（知らないキー・状態・重複・件数の上限）、比較と数え上げ
+- `compare-core.test.js`: 既定の表と実測の記録の一致、書き出しと読み込みの往復、壊れたJSONの拒否、名前の整え方
 - `messages.test.js`: `script.js`が引く文言が辞書にあること
+- `i18n.test.js`: 日英の辞書、HTMLの既定の文、最初の言語
 - `html.test.js`: CSP・ARIA・ボタンの種類・外部リンク・使うidの有無
 - `contrast.test.js`: 文字と下地の組が4.5:1以上（半透明の下地は重ねてから計算）
 - `format.test.js`: 行の長さ・改行・見えない文字

@@ -12,7 +12,9 @@
 import { GROUPS, GROUP_ORDER, summarize, formatScore } from './js/perm-core.js';
 import { scanAll, diffResults } from './js/scanner.js';
 import { renderRadar } from './js/radar-svg.js';
-import { POLICY_FEATURES, buildAllow, parseProbeMessage, compareResults, summarizeComparison } from './js/policy-core.js';
+import {
+  POLICY_FEATURES, LANG_MESSAGE_TYPE, buildAllow, parseProbeMessage, compareResults, summarizeComparison,
+} from './js/policy-core.js';
 import {
   BASELINES, MAX_IMPORT_BYTES, signature, exposure, guessBaseline, buildExport, cleanLabel, fileStamp, parseImport,
   compareColumns, changedFromBaseline,
@@ -659,7 +661,7 @@ import { t, setLang, getLang, applyI18n, pickInitialLang, readStoredLang, storeL
 
   function setImportStatus(list) {
     importMessages = list;
-    importStatus.textContent = importMessages.map(m => tr(m.k, m.p)).join(' ');
+    importStatus.textContent = importMessages.map(m => tr(m.k, m.p)).join(t('msg.sep'));
   }
 
   async function sha256Hex(text) {
@@ -879,7 +881,7 @@ import { t, setLang, getLang, applyI18n, pickInitialLang, readStoredLang, storeL
     policyFrame.className = 'probe-frame';
     policyFrame.title = t('policy.frameTitle');
     policyFrame.setAttribute('allow', buildAllow(allowedKeys()));
-    policyFrame.src = 'probe.html';
+    policyFrame.src = `probe.html?lang=${getLang()}`;
     policyFrameWrap.replaceChildren(policyFrame);
     policyTimer = setTimeout(() => {
       policyMsg = K('policy.timeout', { sec: POLICY_TIMEOUT_MS / 1000 });
@@ -898,7 +900,10 @@ import { t, setLang, getLang, applyI18n, pickInitialLang, readStoredLang, storeL
     setImportStatus(importMessages);
     if (policyLast) showPolicyResult();
     else if (policyMsg) policySummary.textContent = tr(policyMsg.k, policyMsg.p);
-    if (policyFrame) policyFrame.title = t('policy.frameTitle');
+    if (policyFrame) {
+      policyFrame.title = t('policy.frameTitle');
+      policyFrame.contentWindow.postMessage({ type: LANG_MESSAGE_TYPE, lang: getLang() }, window.location.origin);
+    }
     renderPolicyLabels();
   }
 

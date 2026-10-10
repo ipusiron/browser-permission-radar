@@ -104,6 +104,10 @@ export const MESSAGES = {
     "policy.summary": "{changed}件の状態がこのページと違います。止めた{blocked}件のうち、照会できた{measured}件中{denied}件がdeniedになりました。",
     "policy.frameTitle": "照会用のページ（Permissions Policyの実験）",
     "policy.featureLabel": "{key}（{feature}）",
+    "probe.text": "埋め込みの実験用のページ（照会した権限: {n}）",
+    "probe.waiting": "埋め込みの実験用のページ（照会中）",
+    "probe.alone": "このページは、Browser Permission Radarの「埋め込み」タブがiframeに入れて使う照会用のページです。",
+    "probe.open": "Browser Permission Radarを開く",
 
     "log.rescan": "照会し直しました（{n}件）",
     "log.change": "{key}: {from} → {to}（ブラウザーからの変更の通知）",
@@ -152,6 +156,7 @@ export const MESSAGES = {
     "geo.code.3": "時間切れ",
 
     "list.sep": "、",
+    "msg.sep": "",
 
     "bool.true": "true",
     "bool.false": "false",
@@ -386,6 +391,10 @@ export const MESSAGES = {
     "policy.summary": "{changed} states differ from this page. Of the {blocked} blocked features, {denied} of the {measured} that could be queried became denied.",
     "policy.frameTitle": "Query page (Permissions Policy experiment)",
     "policy.featureLabel": "{key} ({feature})",
+    "probe.text": "Query page for the embedding experiment (permissions queried: {n})",
+    "probe.waiting": "Query page for the embedding experiment (querying)",
+    "probe.alone": "This page is the query page that the \"Embedding\" tab of Browser Permission Radar puts in an iframe.",
+    "probe.open": "Open Browser Permission Radar",
 
     "log.rescan": "Queried again ({n} permissions)",
     "log.change": "{key}: {from} → {to} (change reported by the browser)",
@@ -434,6 +443,7 @@ export const MESSAGES = {
     "geo.code.3": "timed out",
 
     "list.sep": ", ",
+    "msg.sep": " ",
 
     "bool.true": "true",
     "bool.false": "false",

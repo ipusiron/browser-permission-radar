@@ -108,7 +108,7 @@ export function classify({ queryState = null, featurePresent = false, notificati
 
 ## 対応権限一覧
 
-本ツールが照会する12の権限です。版はMDNのbrowser-compat-data（2026-10-09のコミット時点）による、Permissions APIの`name`として照会できるようになった版です。
+本ツールが照会する18の権限です。版はMDNのbrowser-compat-data（2026-10-09のコミット時点）による、Permissions APIの`name`として照会できるようになった版です。
 
 ### 🟢 デバイスアクセス系
 
@@ -137,6 +137,18 @@ export function classify({ queryState = null, featurePresent = false, notificati
 | `payment-handler` | 66 | なし | なし | Webの決済アプリ | 偽の決済画面 |
 | `idle-detection` | 項目なし（ChromiumのIDLにはある） | なし | なし | 操作していない・画面のロックの検知 | 在席・離席の監視 |
 
+### 🟠 画面・ネットワーク・センサー系
+
+| 権限名 | Chrome・Edge | Firefox | Safari | 説明 | リスク |
+|---|---|---|---|---|---|
+| `local-network` | 145（142〜144は`local-network-access`） | 153 | なし | LANの中の機器・localhostへの通信 | LANの探索、ルーターなどへの不正な要求 |
+| `storage-access` | 119 | 117 | 26.2 | 埋め込まれたページの自分のCookie | サイトをまたいだ追跡 |
+| `screen-wake-lock` | 84 | 126 | 16.4 | 画面のロック止め | バッテリーの消費、開いたままの画面 |
+| `window-management` | 111 | なし | なし | すべての画面の配置・解像度 | 指紋の材料 |
+| `local-fonts` | 103 | なし | なし | インストールされたフォントの一覧 | 指紋の材料 |
+| `accelerometer` | 62 | なし | なし | 加速度センサー | 動きの推測 |
+
+- `local-network`は、受け付けられなければ旧名`local-network-access`で照会し直します
 - Firefoxでは`notifications`と`push`は同じ値を返す別名で、`userVisibleOnly`に対応していません
 - Chromeは`push`を`userVisibleOnly: true`以外で照会するとrejectします
 
@@ -188,7 +200,10 @@ stream.getTracks().forEach(tr => tr.stop());
 - 永続ストレージ: `navigator.storage.persist()`
 - アイドル検出: `IdleDetector.requestPermission()`
 - Background Sync: 通信しない`sw.js`を登録し、`registration.sync.register()`。「Cleanup」で登録を解除する
-- `push`と`payment-handler`は、外部のサービスとの通信や決済アプリの登録が要るため、テストを置いていません
+- 画面のロック止め: `navigator.wakeLock.request('screen')`（すぐに解放）
+- ローカルフォント: `queryLocalFonts()`（件数だけ表示）
+- 画面の配置: `getScreenDetails()`（画面の台数だけ表示）
+- `push`・`payment-handler`・`local-network`・`storage-access`・`accelerometer`は、外部との通信や決済アプリの登録が要るか、試しても照会の結果が変わらないため、テストを置いていません
 
 ---
 

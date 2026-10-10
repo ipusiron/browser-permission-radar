@@ -36,6 +36,9 @@ test('t(): 差し込みと、辞書にないキー・言語の扱い', () => {
   assert.equal(getLang(), 'ja');
 });
 
-test('辞書の値は空でない文字列', () => {
-  for (const [k, v] of Object.entries(ja)) assert.ok(typeof v === 'string' && v.length > 0, k);
+test('辞書の値は空でない文字列（区切りの *.sep は空でもよい。日本語の文の間には空白を入れない）', () => {
+  for (const [k, v] of Object.entries(ja)) {
+    assert.ok(typeof v === 'string' && (v.length > 0 || k.endsWith('.sep')), k);
+  }
+  assert.equal(ja['msg.sep'], '');
 });
