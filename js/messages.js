@@ -50,6 +50,8 @@ export const MESSAGES = {
     'perm.idle-detection.risk': '在席・離席の監視',
     'perm.tooltip': '{desc}\n\nリスク: {risk}',
 
+    'help.perm': '{key} の説明',
+
     'table.permission': '権限',
     'table.state': '状態',
     'table.source': '出所',

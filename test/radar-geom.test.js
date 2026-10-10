@@ -84,3 +84,8 @@ test('radar-svg: 点を描く半径は最小 0.05（中心で重ならない）�
   assert.equal(displayRadius('unknown'), 0.05);
   assert.equal(measureLabel('MIDI'), 4 * LABEL.font * 0.6);
 });
+
+test('点の押せる範囲は、幅 320px（レーダーの表示幅 244px）でも 24px 以上', async () => {
+  const { HIT_R } = await import('../js/radar-svg.js');
+  assert.ok((HIT_R * 2 * 244) / SIZE >= 24);
+});

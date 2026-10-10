@@ -12,6 +12,8 @@ import {
 import { stateToScore } from './perm-core.js';
 
 const NS = 'http://www.w3.org/2000/svg';
+/** 点の押せる範囲の半径（viewBox の単位）。幅 320px の画面でも 24px 以上になる */
+export const HIT_R = 20;
 /** 点を描く最小の半径の割合（0 の点が中心で重なって押せなくならないように） */
 export const MIN_DISPLAY_RADIUS = 0.05;
 
@@ -83,7 +85,7 @@ export function renderRadar(svg, { items, pointLabel, onSelect }) {
     const g = el('g', {
       class: `pt state-${it.state}`, role: 'button', tabindex: 0, 'data-key': it.key, 'aria-label': pointLabel(it.key),
     }, pointsG);
-    el('circle', { cx: round2(p.x), cy: round2(p.y), r: POINT_R + 9, class: 'pt-hit' }, g);
+    el('circle', { cx: round2(p.x), cy: round2(p.y), r: HIT_R, class: 'pt-hit' }, g);
     el('circle', { cx: round2(p.x), cy: round2(p.y), r: POINT_R + 4, class: 'pt-focus' }, g);
     el('circle', { cx: round2(p.x), cy: round2(p.y), r: POINT_R, class: 'pt-dot' }, g);
     const title = el('title', {}, g);

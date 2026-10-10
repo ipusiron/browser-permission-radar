@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Browser Permission Radar - ブラウザー権限可視化ツール</title>
 
-  <!-- Security Headers -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'self'; form-action 'none';">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <!-- CSP（meta で効く範囲。frame-ancestors は meta では効かないので書かない） -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; worker-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
 
   <link rel="stylesheet" href="style.css" />
-  <meta name="color-scheme" content="light dark">
 </head>
 <body>
   <header class="topbar">
@@ -20,11 +21,16 @@
   </header>
 
   <main class="container">
-    <nav class="tabs">
-      <button data-tab="radar" class="tab active">レーダー</button>
-      <button data-tab="details" class="tab">詳細</button>
-      <button data-tab="learn" class="tab">座学</button>
-    </nav>
+    <div id="frameNotice" class="notice" role="note" hidden>
+      このページは別のページに埋め込まれて（iframe の中で）開かれています。埋め込み元の Permissions Policy で許されていない権限は、尋ねられずに denied になります。単独のタブで開くと、このサイトに対する状態が見えます。
+    </div>
+    <noscript><p class="notice">このツールは JavaScript で権限を照会します。JavaScript を有効にしてください。</p></noscript>
+
+    <div class="tabs" role="tablist" aria-label="表示の切り替え">
+      <button type="button" id="tab-radar" data-tab="radar" class="tab active" role="tab" aria-selected="true" aria-controls="radar">レーダー</button>
+      <button type="button" id="tab-details" data-tab="details" class="tab" role="tab" aria-selected="false" aria-controls="details" tabindex="-1">詳細</button>
+      <button type="button" id="tab-learn" data-tab="learn" class="tab" role="tab" aria-selected="false" aria-controls="learn" tabindex="-1">座学</button>
+    </div>
 
     <!-- Global Legend -->
     <div class="global-legend">
@@ -34,18 +40,18 @@
         <span class="legend-item"><span class="legend-dot denied"></span>denied</span>
         <span class="legend-item"><span class="legend-dot unknown"></span>unknown</span>
         <span class="legend-item"><span class="legend-dot unsupported"></span>unsupported</span>
-        <span class="help-icon" data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定（使う前に尋ねられる）&#10;denied=拒否済み&#10;unknown=機能はあるが、このブラウザーでは照会できない&#10;unsupported=機能の API がない">?</span>
+        <button type="button" class="help-icon" data-tooltip="権限の状態を表します。&#10;granted=許可済み&#10;prompt=未決定（使う前に尋ねられる）&#10;denied=拒否済み&#10;unknown=機能はあるが、このブラウザーでは照会できない&#10;unsupported=機能の API がない" aria-label="説明">?</button>
       </div>
     </div>
 
     <!-- Radar (カテゴリ分割 & スコアリンク) -->
-    <section id="radar" class="panel visible">
+    <section id="radar" class="panel" role="tabpanel" aria-labelledby="tab-radar">
       <div class="grid-3">
         <div class="card">
           <h3 class="group-title">
             デバイスアクセス系
-            <span class="help-icon" data-tooltip="カメラ、マイク、位置情報、MIDI機器など&#10;物理デバイスへのアクセス権限を示します。&#10;&#10;リスク: 盗撮・盗聴・位置特定">?</span>
-            <button id="scoreLink-device" class="score-link" title="Detailsでこのカテゴリに絞り込み">Score: <span id="score-device">-</span></button>
+            <button type="button" class="help-icon" data-tooltip="カメラ、マイク、位置情報、MIDI機器など&#10;物理デバイスへのアクセス権限を示します。&#10;&#10;リスク: 盗撮・盗聴・位置特定" aria-label="説明">?</button>
+            <button type="button" id="scoreLink-device" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-device">-</span></button>
           </h3>
           <p class="muted small">geolocation / camera / microphone / midi</p>
           <p class="muted tiny score-measured" id="measured-device"></p>
@@ -57,8 +63,8 @@
         <div class="card">
           <h3 class="group-title">
             データアクセス系
-            <span class="help-icon" data-tooltip="クリップボード、永続ストレージ、&#10;バックグラウンド同期など、&#10;ユーザーデータの読み書きに関する権限です。&#10;&#10;リスク: パスワード窃取・トラッキング">?</span>
-            <button id="scoreLink-data" class="score-link" title="Detailsでこのカテゴリに絞り込み">Score: <span id="score-data">-</span></button>
+            <button type="button" class="help-icon" data-tooltip="クリップボード、永続ストレージ、&#10;バックグラウンド同期など、&#10;ユーザーデータの読み書きに関する権限です。&#10;&#10;リスク: パスワード窃取・トラッキング" aria-label="説明">?</button>
+            <button type="button" id="scoreLink-data" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-data">-</span></button>
           </h3>
           <p class="muted small">clipboard-read / clipboard-write / persistent-storage / background-sync</p>
           <p class="muted tiny score-measured" id="measured-data"></p>
@@ -70,8 +76,8 @@
         <div class="card">
           <h3 class="group-title">
             通知・通信系
-            <span class="help-icon" data-tooltip="プッシュ通知、決済処理、アイドル検知など、&#10;ユーザーへの通信・通知機能に関する権限です。&#10;&#10;リスク: スパム・フィッシング誘導・&#10;不正決済・行動監視">?</span>
-            <button id="scoreLink-comm" class="score-link" title="Detailsでこのカテゴリに絞り込み">Score: <span id="score-comm">-</span></button>
+            <button type="button" class="help-icon" data-tooltip="プッシュ通知、決済処理、アイドル検知など、&#10;ユーザーへの通信・通知機能に関する権限です。&#10;&#10;リスク: スパム・フィッシング誘導・&#10;不正決済・行動監視" aria-label="説明">?</button>
+            <button type="button" id="scoreLink-comm" class="score-link" title="詳細タブでこのカテゴリに絞り込む">Score: <span id="score-comm">-</span></button>
           </h3>
           <p class="muted small">notifications / push / payment-handler / idle-detection</p>
           <p class="muted tiny score-measured" id="measured-comm"></p>
@@ -84,53 +90,53 @@
       <div class="card">
         <div class="row space-between">
           <h3>クイックテスト（安全な最小動作）
-            <span class="help-icon" data-tooltip="各権限を安全にテストできます。&#10;&#10;・カメラ・マイクは即座に停止&#10;・データ送信は一切なし&#10;・権限リクエストの動作を体験可能">?</span>
+            <button type="button" class="help-icon" data-tooltip="各権限を安全にテストできます。&#10;&#10;・カメラ・マイクは即座に停止&#10;・データ送信は一切なし&#10;・権限リクエストの動作を体験可能" aria-label="説明">?</button>
           </h3>
-          <button id="rescanBtn" class="rescan-btn">🔄 Rescan All</button>
+          <button type="button" id="rescanBtn" class="rescan-btn">🔄 Rescan All</button>
         </div>
         <div class="test-grid">
           <div class="test-item">
-            <button id="askNotif" class="test-btn">🔔 Notifications</button>
+            <button type="button" id="askNotif" class="test-btn">🔔 Notifications</button>
             <span class="test-desc">通知の許可をリクエスト</span>
           </div>
           <div class="test-item">
-            <button id="getGeo" class="test-btn">📍 Geolocation</button>
+            <button type="button" id="getGeo" class="test-btn">📍 Geolocation</button>
             <span class="test-desc">位置情報を1回取得</span>
           </div>
           <div class="test-item">
-            <button id="getCamera" class="test-btn">📷 Camera</button>
+            <button type="button" id="getCamera" class="test-btn">📷 Camera</button>
             <span class="test-desc">カメラのみ起動（即停止）</span>
           </div>
           <div class="test-item">
-            <button id="getMic" class="test-btn">🎤 Microphone</button>
+            <button type="button" id="getMic" class="test-btn">🎤 Microphone</button>
             <span class="test-desc">マイクのみ起動（即停止）</span>
           </div>
           <div class="test-item">
-            <button id="readClip" class="test-btn">📋 Clipboard Read</button>
+            <button type="button" id="readClip" class="test-btn">📋 Clipboard Read</button>
             <span class="test-desc">クリップボードを読み取り</span>
           </div>
           <div class="test-item">
-            <button id="writeClip" class="test-btn">✏️ Clipboard Write</button>
+            <button type="button" id="writeClip" class="test-btn">✏️ Clipboard Write</button>
             <span class="test-desc">'test' をクリップボードに書き込み</span>
           </div>
           <div class="test-item">
-            <button id="getMIDI" class="test-btn">🎹 MIDI</button>
+            <button type="button" id="getMIDI" class="test-btn">🎹 MIDI</button>
             <span class="test-desc">MIDI機器へのアクセスをリクエスト</span>
           </div>
           <div class="test-item">
-            <button id="askPersist" class="test-btn">💾 Persistent Storage</button>
+            <button type="button" id="askPersist" class="test-btn">💾 Persistent Storage</button>
             <span class="test-desc">永続ストレージをリクエスト</span>
           </div>
           <div class="test-item">
-            <button id="askIdle" class="test-btn">💤 Idle Detection</button>
+            <button type="button" id="askIdle" class="test-btn">💤 Idle Detection</button>
             <span class="test-desc">アイドル検出の許可をリクエスト</span>
           </div>
           <div class="test-item">
-            <button id="testBgSync" class="test-btn">🔄 Background Sync</button>
+            <button type="button" id="testBgSync" class="test-btn">🔄 Background Sync</button>
             <span class="test-desc">押したときだけ Service Worker（sw.js、通信しない）を登録し、同期を登録</span>
           </div>
           <div class="test-item">
-            <button id="cleanupSW" class="test-btn">🧹 Cleanup</button>
+            <button type="button" id="cleanupSW" class="test-btn">🧹 Cleanup</button>
             <span class="test-desc">このツールが登録した Service Worker を解除（後片付け）</span>
           </div>
         </div>
@@ -139,155 +145,171 @@
     </section>
 
     <!-- Details（フィルタ＆リンク先） -->
-    <section id="details" class="panel">
+    <section id="details" class="panel" role="tabpanel" aria-labelledby="tab-details" hidden>
       <div class="card">
         <div class="row space-between">
           <h3>Permission Status List
-            <span class="help-icon" data-tooltip="全権限の詳細一覧です。&#10;&#10;・カテゴリフィルターで絞り込み可能&#10;・権限名クリックでハイライト表示&#10;・?アイコンで詳細なリスク解説を表示">?</span>
+            <button type="button" class="help-icon" data-tooltip="全権限の詳細一覧です。&#10;&#10;・カテゴリフィルターで絞り込み可能&#10;・権限名クリックでハイライト表示&#10;・?アイコンで詳細なリスク解説を表示" aria-label="説明">?</button>
           </h3>
           <div class="filter-row">
             <span class="muted small">カテゴリフィルター:</span>
-            <button class="chip" data-filter="all">All</button>
-            <button class="chip" data-filter="device">Device</button>
-            <button class="chip" data-filter="data">Data</button>
-            <button class="chip" data-filter="comm">Comm</button>
+            <button type="button" class="chip" data-filter="all">All</button>
+            <button type="button" class="chip" data-filter="device">Device</button>
+            <button type="button" class="chip" data-filter="data">Data</button>
+            <button type="button" class="chip" data-filter="comm">Comm</button>
           </div>
         </div>
-        <p class="muted">ブラウザの実装状況により、未対応は <code>unsupported</code> になります。権限名をクリックすると軽くハイライトします。</p>
+        <p class="muted">照会できない権限は <code>unknown</code>、機能の API がないものは <code>unsupported</code> と表示します。「出所」は、状態をどこから読んだかです。</p>
         <div id="permTableWrap" class="table-wrap"></div>
       </div>
     </section>
 
     <!-- Learn -->
-    <section id="learn" class="panel">
+    <section id="learn" class="panel" role="tabpanel" aria-labelledby="tab-learn" hidden>
       <div class="card">
-        <h2>📚 座学：ブラウザ権限の基礎知識</h2>
-        <p class="muted" style="margin-bottom:20px;">各セクションをクリックして展開できます</p>
+        <h2>📚 座学：ブラウザーの権限の基礎知識</h2>
+        <p class="muted lead-note">各セクションを押すと開きます</p>
 
         <!-- Accordion 1 -->
         <div class="accordion-section">
-          <button class="accordion-header" data-accordion="permissions-api">
+          <button type="button" class="accordion-header" data-accordion="permissions-api" aria-expanded="false" aria-controls="acc-permissions-api">
             🔑 Permissions API とは
           </button>
-          <div class="accordion-content" data-accordion-content="permissions-api">
-            <p><strong>Permissions API</strong> は、Webアプリケーションがブラウザの機能（位置情報、カメラ、通知など）にアクセスする際の許可状態を統一的に管理するための仕様です。</p>
+          <div class="accordion-content" id="acc-permissions-api" data-accordion-content="permissions-api">
+            <p><strong>Permissions API</strong> は、Web ページがブラウザーの機能（位置情報・カメラ・通知など）を使ってよいかの状態を、共通の方法で問い合わせる仕組みです。</p>
             <ul>
-              <li><strong>統一仕様</strong>：W3Cによって標準化されているが、ブラウザごとに対応状況が異なる</li>
-              <li><strong>オリジン単位の管理</strong>：許可した権限は <code>https://example.com</code> のようなオリジン（プロトコル + ドメイン + ポート）ごとに記録される</li>
-              <li><strong>4つの状態</strong>：
-                <ul>
-                  <li><code>granted</code> - 許可済み（アクセス可能）</li>
-                  <li><code>prompt</code> - 未決定（次回アクセス時にプロンプト表示）</li>
-                  <li><code>denied</code> - 拒否済み（アクセス不可）</li>
-                  <li><code>unsupported</code> - ブラウザ未対応（このツール独自の表示）</li>
-                </ul>
-              </li>
+              <li>照会の書き方：<code>navigator.permissions.query({ name: 'camera' })</code>。答えは <code>granted</code>（許可済み）・<code>prompt</code>（使う前に尋ねられる）・<code>denied</code>（拒否済み）の3つ</li>
+              <li>このツールの表示：照会できなかった権限は、機能の API があれば <code>unknown</code>（照会できない）、なければ <code>unsupported</code>（機能なし）と分けて出す。unknown はスコアの平均に入れない</li>
+              <li>ブラウザーごとに照会できる名前が違う：Chromium 系（Chrome・Edge）は多く、Firefox・Safari は少ない。知らない名前は TypeError で拒否される</li>
+              <li>通知だけは古い <code>Notification.permission</code> でも読める。未決定は <code>default</code> と返り、Permissions API の <code>prompt</code> にあたる</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 2 -->
         <div class="accordion-section">
-          <button class="accordion-header" data-accordion="permission-risks">
-            🔐 権限の種類とリスク
+          <button type="button" class="accordion-header" data-accordion="scope" aria-expanded="false" aria-controls="acc-scope">
+            🔭 このページに見えるもの・見えないもの
           </button>
-          <div class="accordion-content" data-accordion-content="permission-risks">
-            <h4>🟢 デバイスアクセス系</h4>
+          <div class="accordion-content" id="acc-scope" data-accordion-content="scope">
             <ul>
-              <li><strong>camera / microphone</strong>：盗撮・盗聴リスク。悪意あるサイトが無断で録画・録音する可能性</li>
-              <li><strong>geolocation</strong>：位置情報追跡リスク。行動パターンの分析やストーキングに悪用される可能性</li>
-              <li><strong>midi</strong>：デバイス指紋生成リスク。接続されているMIDI機器情報からユーザーを識別する可能性</li>
-            </ul>
-
-            <h4>🔵 データアクセス系</h4>
-            <ul>
-              <li><strong>clipboard-read</strong>：パスワード窃取リスク。コピーした機密情報を無断で読み取られる可能性</li>
-              <li><strong>clipboard-write</strong>：悪意あるコード注入リスク。クリップボードを書き換えて別のコマンドを実行させる可能性</li>
-              <li><strong>persistent-storage</strong>：長期的トラッキングリスク。削除されにくいデータでユーザーを追跡する可能性</li>
-              <li><strong>background-sync</strong>：意図しない通信リスク。バックグラウンドでデータを送信し続ける可能性</li>
-            </ul>
-
-            <h4>🟣 通信・通知系</h4>
-            <ul>
-              <li><strong>notifications</strong>：フィッシング誘導リスク。偽の警告通知で悪意あるサイトへ誘導する可能性</li>
-              <li><strong>push</strong>：バックグラウンド通信リスク。サーバーからのプッシュメッセージで行動を監視される可能性</li>
-              <li><strong>payment-handler</strong>：不正決済リスク。偽の決済画面で金銭的被害を受ける可能性</li>
-              <li><strong>idle-detection</strong>：行動監視リスク。ユーザーの活動パターンを分析される可能性</li>
+              <li>照会で見えるのは、照会したページのオリジン（このツールなら <code>https://ipusiron.github.io</code>）への決定だけ。ほかのサイトに与えた許可は、どのページからも見えない</li>
+              <li>ほかのサイトの許可を確かめるには、ブラウザーの設定を開く（Chrome は <code>chrome://settings/content</code>、Edge は <code>edge://settings/content</code>、Firefox は <code>about:preferences#privacy</code> の「許可設定」）</li>
+              <li>照会には利用者の操作が要らない。どのサイトも、開いた瞬間に同じ照会ができる。尋ねずに読めるこの情報は、ブラウザーを見分ける材料（指紋）にもなる</li>
+              <li>iframe に埋め込まれたページは、埋め込み元の Permissions Policy に従う。許されていない機能は、尋ねられずに <code>denied</code> になる</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 3 -->
         <div class="accordion-section">
-          <button class="accordion-header" data-accordion="persistence">
-            ⏱️ 権限の永続性について
+          <button type="button" class="accordion-header" data-accordion="permission-risks" aria-expanded="false" aria-controls="acc-permission-risks">
+            🔐 権限の種類とリスク
           </button>
-          <div class="accordion-content" data-accordion-content="persistence">
+          <div class="accordion-content" id="acc-permission-risks" data-accordion-content="permission-risks">
+            <h3>🟢 デバイスアクセス系</h3>
             <ul>
-              <li><strong>永続的な権限</strong>：通知・位置情報・クリップボード書き込み等は、一度許可すると<code>granted</code>状態が保持される
-                <br><span class="muted">💡 レーダーチャートの変化を確認するには、通知権限のテストを推奨</span>
-              </li>
-              <li><strong>一時的な権限</strong>：カメラ・マイクは<code>getUserMedia()</code>で許可されるが、ストリーム停止後は<code>prompt</code>に戻る
-                <br><span class="muted">💡 これはプライバシー保護のためのブラウザの仕様</span>
-              </li>
-              <li><strong>状態の確認</strong>：Quick Testsで権限を許可した後、<code>Rescan All</code>ボタンでレーダーチャートを更新し、状態変化を観察できる</li>
+              <li>camera / microphone：盗撮・盗聴。許可を与えたサイトは、ページを開いている間ずっと使える</li>
+              <li>geolocation：行動の追跡・居場所の特定</li>
+              <li>midi：接続している MIDI 機器の構成が、ブラウザーを見分ける材料になる</li>
+            </ul>
+
+            <h3>🔵 データアクセス系</h3>
+            <ul>
+              <li>clipboard-read：コピーしたパスワードや機密情報の読み取り</li>
+              <li>clipboard-write：ClickFix と呼ばれる手口で悪用される。偽の CAPTCHA のボタンを押させ、裏で
+                <code>navigator.clipboard.writeText()</code> により悪性のコマンドをクリップボードに書き込み、
+                「Win+R（ファイル名を指定して実行）やターミナルに貼り付けて実行して」と指示する（Microsoft Security Blog、2025年8月）。
+                Chromium 系ではこの書き込みに許可を求められない</li>
+              <li>persistent-storage：消されにくい保存領域。長く残る識別子・容量の圧迫</li>
+              <li>background-sync：ページを閉じたあとも Service Worker が同期できる。Chromium 系では既定で許可されている</li>
+            </ul>
+
+            <h3>🟣 通信・通知系</h3>
+            <ul>
+              <li>notifications：偽の警告の通知で、フィッシングサイトへ誘導する</li>
+              <li>push：ページを閉じていても届く。通知の許可と組み合わせて使われる</li>
+              <li>payment-handler：Web の決済アプリ。偽の決済画面の土台になりうる</li>
+              <li>idle-detection：操作していない・画面がロックされた、を検知する。在席・離席の監視</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 4 -->
         <div class="accordion-section">
-          <button class="accordion-header" data-accordion="best-practices">
-            🛡️ セキュリティのベストプラクティス
+          <button type="button" class="accordion-header" data-accordion="persistence" aria-expanded="false" aria-controls="acc-persistence">
+            ⏱️ 許可はいつまで続くか・尋ねられない権限
           </button>
-          <div class="accordion-content" data-accordion-content="best-practices">
+          <div class="accordion-content" id="acc-persistence" data-accordion-content="persistence">
             <ul>
-              <li><strong>最小権限の原則</strong>：必要最低限の権限のみを許可する</li>
-              <li><strong>定期的な見直し</strong>：ブラウザ設定から不要な権限を定期的に削除する</li>
-              <li><strong>オリジンの確認</strong>：権限を許可する前に、URLバーでオリジンが正しいか確認する（フィッシングサイト対策）</li>
-              <li><strong>即座に停止</strong>：カメラ・マイクなどのデバイスアクセスは、使用後すぐに停止する（このツールも実践）</li>
-              <li><strong>プライベートブラウジング活用</strong>：一時的に権限が必要な場合は、プライベートウィンドウを使用する</li>
+              <li>今回のみの許可：Chrome（116以降のデスクトップ版）は、位置情報・カメラ・マイクで「今回のみ許可」を選べる。ページを閉じる・別のページへ移る・5分以上裏に置く・16時間たつ、のいずれかで失効し、<code>granted</code> から <code>prompt</code> に戻る</li>
+              <li>Firefox は、カメラ・マイクの問い合わせで「この決定を記憶する」を付けなければ一時的な許可になり、1時間たつかタブを閉じると消える</li>
+              <li>Safari は、拒否していても、実際にカメラ・位置情報などを要求するまでは <code>prompt</code> と答えることがある。また <code>change</code> の通知が届かないので、このツールのライブ更新は効かない</li>
+              <li>尋ねられない権限：Chromium 系では background-sync・センサー・clipboard-write が既定で許可されている（このツールでは開いた直後から granted と出る）。persistent-storage は Chromium 系と Safari が利用状況で自動で決め、Firefox は尋ねる</li>
+              <li>このツールは <code>change</code> の通知を受け取り、ブラウザーの設定やアドレスバーの鍵のアイコンから許可を変えると、その場でレーダーとログに反映する</li>
             </ul>
           </div>
         </div>
 
         <!-- Accordion 5 -->
         <div class="accordion-section">
-          <button class="accordion-header" data-accordion="how-to-learn">
-            🧪 このツールの学習方法
+          <button type="button" class="accordion-header" data-accordion="best-practices" aria-expanded="false" aria-controls="acc-best-practices">
+            🛡️ セキュリティのベストプラクティス
           </button>
-          <div class="accordion-content" data-accordion-content="how-to-learn">
-            <ol>
-              <li><strong>現在の状態を確認</strong>：まず「レーダー」タブで自分のブラウザの権限状態を確認</li>
-              <li><strong>権限を体験</strong>：「Quick Tests」で安全に権限リクエストを体験（カメラ・マイクは即停止、位置情報・クリップボードは非表示）</li>
-              <li><strong>変化を観察</strong>：<code>Rescan All</code>でレーダーチャートの変化を確認</li>
-              <li><strong>詳細を理解</strong>：「詳細」タブで各権限の状態を確認し、「?」アイコンでリスクを学習</li>
-              <li><strong>リセット</strong>：ブラウザ設定から権限をリセットし、最小権限の状態に戻す</li>
-            </ol>
-          </div>
-        </div>
-
-        <!-- Accordion 6 - Resource Links -->
-        <div class="accordion-section">
-          <button class="accordion-header" data-accordion="resources">
-            🔗 関連リソース
-          </button>
-          <div class="accordion-content" data-accordion-content="resources">
+          <div class="accordion-content" id="acc-best-practices" data-accordion-content="best-practices">
             <ul>
-              <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API" target="_blank" rel="noopener noreferrer">MDN: Permissions API （英語）</a></li>
-              <li><a href="PERMISSIONS_API.md">技術仕様書（このリポジトリ）</a></li>
+              <li>最小権限の原則：必要最低限の権限だけを許可する</li>
+              <li>定期的な見直し：ブラウザーの設定（サイトの設定・許可設定）から、使わなくなったサイトの許可を取り消す</li>
+              <li>オリジンの確認：許可する前に、問い合わせに表示されたサイトの名前（オリジン）が意図したものかを確かめる</li>
+              <li>すぐに止める：カメラ・マイクは使い終わったら止める（このツールも取得してすぐ止める）</li>
+              <li>貼り付けて実行しない：ページの指示でコマンドを「ファイル名を指定して実行」やターミナルに貼り付けない（ClickFix 対策）</li>
+              <li>プライベートウィンドウ：一時的に試したいときは、プライベートウィンドウを使う</li>
             </ul>
           </div>
         </div>
 
-        <p class="muted" style="margin-top:24px;">※ このツールは教育目的であり、データはすべてローカルで処理されます。サーバーへの送信は一切行いません。</p>
+        <!-- Accordion 6 -->
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" data-accordion="how-to-learn" aria-expanded="false" aria-controls="acc-how-to-learn">
+            🧪 このツールの学習方法
+          </button>
+          <div class="accordion-content" id="acc-how-to-learn" data-accordion-content="how-to-learn">
+            <ol>
+              <li>現在の状態を確認：「レーダー」タブで、このサイトに対する状態を見る（開いた直後から granted の権限は、尋ねずに許可されているもの）</li>
+              <li>権限を体験：「クイックテスト」で要求を出し、ブラウザーの問い合わせを体験する（カメラ・マイクはすぐ止め、座標・クリップボードの内容は表示しない）</li>
+              <li>変化を観察：許可・拒否のあと、レーダーとログが自動で変わる。鍵のアイコンから許可を取り消しても変わる</li>
+              <li>詳細を理解：「詳細」タブで、状態の出所（Permissions API／Notification.permission／照会できない理由）を確かめる</li>
+              <li>リセット：ブラウザーの設定でこのサイトの許可を取り消し、「Cleanup」で Service Worker の登録を解除する</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Accordion 7 - Resource Links -->
+        <div class="accordion-section">
+          <button type="button" class="accordion-header" data-accordion="resources" aria-expanded="false" aria-controls="acc-resources">
+            🔗 関連リソース
+          </button>
+          <div class="accordion-content" id="acc-resources" data-accordion-content="resources">
+            <ul>
+              <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API" target="_blank" rel="noopener noreferrer">MDN: Permissions API（英語）</a></li>
+              <li><a href="https://w3c.github.io/permissions/" target="_blank" rel="noopener noreferrer">W3C: Permissions（仕様、英語）</a></li>
+              <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Permissions_Policy" target="_blank" rel="noopener noreferrer">MDN: Permissions Policy（英語）</a></li>
+              <li><a href="https://developer.chrome.com/blog/one-time-permissions" target="_blank" rel="noopener noreferrer">Chrome for Developers: One-time permissions（英語）</a></li>
+              <li><a href="https://www.microsoft.com/en-us/security/blog/2025/08/21/think-before-you-clickfix-analyzing-the-clickfix-social-engineering-technique/"
+                  target="_blank" rel="noopener noreferrer">Microsoft Security Blog: ClickFix の分析（英語）</a></li>
+              <li><a href="https://github.com/ipusiron/browser-permission-radar/blob/main/PERMISSIONS_API.md" target="_blank" rel="noopener noreferrer">技術仕様書（このリポジトリー）</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="muted closing-note">※ このツールは教育目的です。照会と表示はすべてブラウザーの中で行い、結果をサーバーへ送りません。</p>
       </div>
     </section>
   </main>
 
   <footer>
     <div class="footer">
-      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank" rel="noopener noreferrer">ipusiron/browser-permission-radar</a> ）
+      🔗 <a href="https://github.com/ipusiron/browser-permission-radar" target="_blank" rel="noopener noreferrer">GitHub リポジトリー（ipusiron/browser-permission-radar）</a>
     </div>
   </footer>
 

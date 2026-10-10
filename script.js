@@ -18,12 +18,13 @@ import { t } from './js/i18n.js';
   'use strict';
 
   // ========================================
-  // Security: Frame-busting
+  // 埋め込み（iframe）の中で開かれたとき
   // ========================================
-  // クリックジャッキング対策（meta X-Frame-Optionsはmetaタグで機能しないため）
-  if (window.top !== window.self) {
-    window.top.location = window.self.location;
-  }
+  // 親のページを移動させず（Chromium 系では SecurityError になり、以前はここで全体が止まっていた）、
+  // 埋め込み元の Permissions Policy に従うことを案内する
+  let framed = false;
+  try { framed = window.top !== window.self; } catch { framed = true; }
+  if (framed) document.getElementById('frameNotice').hidden = false;
 
   // ========================================
   // Tab Management
@@ -32,15 +33,32 @@ import { t } from './js/i18n.js';
   const panels = document.querySelectorAll('.panel');
 
   /**
-   * タブを切り替える
+   * タブを切り替える（aria-selected・tabindex・パネルの hidden をそろえる）
    * @param {string} id - タブのID ('radar', 'details', 'learn')
+   * @param {boolean} [focus] - 切り替えたタブにフォーカスを移すか
    */
-  function selectTab(id){
-    tabs.forEach(b => b.classList.toggle('active', b.dataset.tab===id));
-    panels.forEach(p => p.classList.toggle('visible', p.id===id));
+  function selectTab(id, focus = false){
+    tabs.forEach(b => {
+      const on = b.dataset.tab === id;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1;
+      if (on && focus) b.focus();
+    });
+    panels.forEach(p => { p.hidden = p.id !== id; });
+    hideTooltip();
   }
 
   tabs.forEach(btn => btn.addEventListener('click', () => selectTab(btn.dataset.tab)));
+
+  // 矢印キー・Home・End でタブを移る（WAI-ARIA のタブのパターン）
+  tabs.forEach((btn, i) => btn.addEventListener('keydown', ev => {
+    const keys = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 };
+    if (!(ev.key in keys)) return;
+    ev.preventDefault();
+    const next = tabs[(keys[ev.key] + tabs.length) % tabs.length];
+    selectTab(next.dataset.tab, true);
+  }));
 
   // ========================================
   // DOM Elements
@@ -90,9 +108,12 @@ import { t } from './js/i18n.js';
   // ツールチップ要素を動的に作成
   const tooltipEl = document.createElement('div');
   tooltipEl.className = 'tooltip-bubble';
+  tooltipEl.id = 'tooltipBubble';
+  tooltipEl.setAttribute('role', 'tooltip');
   document.body.appendChild(tooltipEl);
 
   let activeTooltipTarget = null;
+  let tooltipPinned = false;  // 押して開いた（マウスが離れても閉じない）
   const TOOLTIP_PADDING = 12;
 
   /**
@@ -127,7 +148,11 @@ import { t } from './js/i18n.js';
     const text = target.getAttribute('data-tooltip');
     if (!text) return;
 
+    if (activeTooltipTarget === target && tooltipEl.classList.contains('visible')) return;
+    if (activeTooltipTarget && activeTooltipTarget !== target) hideTooltip();
     activeTooltipTarget = target;
+    target.setAttribute('aria-expanded', 'true');
+    target.setAttribute('aria-describedby', tooltipEl.id);
     tooltipEl.textContent = text;
     tooltipEl.classList.add('visible');
     tooltipEl.style.visibility = 'hidden';
@@ -144,19 +169,44 @@ import { t } from './js/i18n.js';
   }
 
   function hideTooltip(){
+    if (activeTooltipTarget) {
+      activeTooltipTarget.setAttribute('aria-expanded', 'false');
+      activeTooltipTarget.removeAttribute('aria-describedby');
+    }
     activeTooltipTarget = null;
+    tooltipPinned = false;
     tooltipEl.classList.remove('visible');
     tooltipEl.style.visibility = '';
   }
 
+  function isTooltipOpenFor(el) {
+    return activeTooltipTarget === el && tooltipEl.classList.contains('visible');
+  }
+
+  /** 「?」のボタン: マウスを乗せる・フォーカスする・押す（タッチ）で開き、もう一度押すか Esc で閉じる */
   function attachTooltipHandlers(root = document){
     root.querySelectorAll('.help-icon, .help-icon-small').forEach(icon => {
       if (icon.dataset.tooltipBound) return;
       icon.dataset.tooltipBound = '1';
+      icon.setAttribute('aria-expanded', 'false');
       icon.addEventListener('mouseenter', showTooltip);
       icon.addEventListener('focus', showTooltip);
-      icon.addEventListener('mouseleave', hideTooltip);
+      icon.addEventListener('mouseleave', ev => {
+        if (!tooltipPinned && document.activeElement !== ev.currentTarget) hideTooltip();
+      });
       icon.addEventListener('blur', hideTooltip);
+      // 押すと「固定」する。マウスを乗せる・フォーカスで開いた状態から押しても閉じない
+      // （押す動作の途中で先に開くため、開いていたら閉じる、にすると1回目の押下で閉じてしまう）
+      // 固定した状態でもう一度押すと閉じる
+      icon.addEventListener('click', ev => {
+        const el = ev.currentTarget;
+        if (isTooltipOpenFor(el) && tooltipPinned) {
+          hideTooltip();
+          return;
+        }
+        if (!isTooltipOpenFor(el)) showTooltip(ev);
+        tooltipPinned = true;
+      });
     });
   }
 
@@ -236,18 +286,23 @@ import { t } from './js/i18n.js';
       tr.dataset.group = r.group;
 
       const c1 = tr.insertCell();
+      const name = document.createElement('span');  // 縦積みのとき、リンクと「?」を1つのまとまりにする
+      name.className = 'perm-name';
+      c1.appendChild(name);
       const a = document.createElement('a');
       a.href = `#perm-row-${r.key}`;
       a.dataset.rowlink = r.key;
       const code = document.createElement('code');
       code.textContent = r.key;
       a.appendChild(code);
-      c1.appendChild(a);
-      const help = document.createElement('span');
+      name.appendChild(a);
+      const help = document.createElement('button');
+      help.type = 'button';
       help.className = 'help-icon help-icon-small';
+      help.setAttribute('aria-label', t('help.perm', { key: r.key }));
       help.dataset.tooltip = permTooltip(r.key);
       help.textContent = '?';
-      c1.appendChild(help);
+      name.appendChild(help);
 
       tr.insertCell().appendChild(badgeEl(r.state));
 
@@ -567,9 +622,11 @@ import { t } from './js/i18n.js';
       const targetId = header.getAttribute('data-accordion');
       const content = document.querySelector(`[data-accordion-content="${targetId}"]`);
 
-      // アクティブ状態をトグル
-      header.classList.toggle('active');
-      content.classList.toggle('active');
+      // 開閉をトグルし、aria-expanded をそろえる（閉じた中身は CSS の visibility で読み上げ・Tab 移動から外す）
+      const open = !header.classList.contains('active');
+      header.classList.toggle('active', open);
+      content.classList.toggle('active', open);
+      header.setAttribute('aria-expanded', String(open));
     });
   });
 
